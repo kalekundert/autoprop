@@ -1,14 +1,26 @@
 ``autoprop`` --- Infer properties from accessor methods
 =======================================================
+.. image:: https://img.shields.io/pypi/v/autoprop.svg
+   :target: https://pypi.python.org/pypi/autoprop
+
+.. image:: https://img.shields.io/pypi/pyversions/autoprop.svg
+   :target: https://pypi.python.org/pypi/autoprop
+
+.. image:: https://img.shields.io/travis/kalekundert/autoprop.svg
+   :target: https://travis-ci.org/kalekundert/autoprop
+
+.. image:: https://img.shields.io/coveralls/kalekundert/autoprop.svg
+   :target: https://coveralls.io/github/kalekundert/autoprop?branch=master
+
 Properties are a feature in python that allow accessor functions (i.e. getters 
 and setters) to masquerade as regular attributes.  This makes it possible to 
 provide transparent APIs for classes that need to cache results, lazily load 
 data, maintain invariants, or react in any other way to attribute access.
 
 Unfortunately, making a property requires a fair amount of boilerplate code.  
-There are a few ways to do it, but the most common requires you to decorate two 
-functions (with two different decorators) and to type the name of the attribute 
-three times::
+There are a few ways to do it, but the most common and most succinct requires 
+you to decorate two functions (with two different decorators) and to type the 
+name of the attribute three times::
 
     class RegularProperty:
         
@@ -33,18 +45,6 @@ above::
 
         def set_attr(self, new_value):
             self._attr = new_value
-
-.. image:: https://img.shields.io/pypi/v/autoprop.svg
-   :target: https://pypi.python.org/pypi/autoprop
-
-.. image:: https://img.shields.io/pypi/pyversions/autoprop.svg
-   :target: https://pypi.python.org/pypi/autoprop
-
-.. image:: https://img.shields.io/travis/kalekundert/autoprop.svg
-   :target: https://travis-ci.org/kalekundert/autoprop
-
-.. image:: https://img.shields.io/coveralls/kalekundert/autoprop.svg
-   :target: https://coveralls.io/github/kalekundert/autoprop?branch=master
 
 Installation
 ------------
