@@ -82,7 +82,8 @@ The decorator searches your class for methods beginning with ``get_``,
 ``set_``, or ``del_`` and uses them to create properties.  The names of the 
 properties are taken from whatever comes after the underscore.  For example, 
 the method ``get_x`` would be used to make a property called ``x``.  Any 
-combination of getter, setter, and deleter methods is allowed.
+combination of getter, setter, and deleter methods is allowed for each 
+property.
 
 Besides having the right prefix, there are two other criteria methods must meet 
 in order to be made into properties.  The first is that they must take the 
