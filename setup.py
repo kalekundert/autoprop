@@ -14,7 +14,7 @@ setup(
     long_description=open('README.rst').read(),
     url='https://github.com/kalekundert/autoprop',
     license='MIT',
-    pymodules=[
+    py_modules=[
         'autoprop',
     ],
     keywords=[
