@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import pytest
-from autoprop import autoprop
+import autoprop
 
 def test_accessors():
     @autoprop   # (no fold)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import inspect, re
+import sys, inspect, re
 from pprint import pprint
 from collections import defaultdict
 
@@ -16,8 +16,6 @@ def autoprop(cls):
         prefix, name = accessor_match.groups()
         arg_spec = inspect.getfullargspec(method)
         num_args = len(arg_spec.args) - len(arg_spec.defaults or ())
-
-        print(prefix, name, num_args)
 
         if num_args != expected_num_args[prefix]:
             continue
@@ -35,3 +33,10 @@ def autoprop(cls):
             ))
 
     return cls
+
+
+# Abuse the import system so that the module itself can be used as a decorator.  
+# This is a very simple intended only to cut-down on boilerplate, so I think 
+# the trade-off between magicalness and ease-of-use is justified in this case.
+sys.modules[__name__] = autoprop
+
