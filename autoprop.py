@@ -39,4 +39,4 @@ def autoprop(cls):
 # This is a very simple intended only to cut-down on boilerplate, so I think 
 # the trade-off between magicalness and ease-of-use is justified in this case.
 sys.modules[__name__] = autoprop
-
+autoprop.__version__ = '0.0.0'

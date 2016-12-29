@@ -6,22 +6,21 @@ try:
 except ImportError:
     from distutils.core import setup
 
-with open('README.rst') as file:
-    readme = file.read()
-
 setup(
     name='autoprop',
     version='0.0.0',
     author='Kale Kundert',
     author_email='kale@thekunderts.net',
-    long_description=readme,
+    long_description=open('README.rst').read(),
     url='https://github.com/kalekundert/autoprop',
     license='MIT',
     pymodules=[
         'autoprop',
     ],
     keywords=[
-        'autoprop',
+        'property', 'properties',
+        'accessor', 'accessors',
+        'getter', 'setter'
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
