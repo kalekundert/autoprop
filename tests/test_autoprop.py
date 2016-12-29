@@ -85,6 +85,23 @@ def test_ignore_non_methods():
     with pytest.raises(AttributeError):
         ex.attr
 
+def test_overwrite_superclass_properties():
+    @autoprop   # (no fold)
+    class Parent:
+        def get_attr(self):
+            return 'parent'
+
+    @autoprop   # (no fold)
+    class Child:
+        def get_attr(self):
+            return 'child'
+
+    parent = Parent()
+    child = Child()
+
+    assert parent.attr == 'parent'
+    assert child.attr == 'child'
+
 def test_dont_overwrite_existing_attributes():
     @autoprop   # (no fold)
     class Example:
