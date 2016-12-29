@@ -23,12 +23,12 @@ setup(
         'getter', 'setter'
     ],
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 3.3',
         'Topic :: Software Development :: Libraries',
     ],
 )
