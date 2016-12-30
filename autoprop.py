@@ -21,8 +21,12 @@ def autoprop(cls):
         if not accessor_match:
             continue
 
+        # Use getfullargspec() if it's available, otherwise use getargspec().
+        try: from inspect import getfullargspec as getargspec
+        except ImportError: from inspect import getargspec
+
         prefix, name = accessor_match.groups()
-        arg_spec = inspect.getargspec(method)
+        arg_spec = getargspec(method)
         num_args = len(arg_spec.args) - len(arg_spec.defaults or ())
         num_args_minus_self = num_args - 1
 

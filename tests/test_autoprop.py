@@ -203,3 +203,18 @@ if sys.version_info[0] == 2:
                 pass
 
         assert '@autoprop can only be used with new-style classes' in str(err)
+
+
+if sys.version_info[0] == 3:
+
+    def test_keyword_only_arguments():
+        # inspect.getargspec() chokes methods with keyword-only arguments.
+        @autoprop   # (no fold)
+        class Example(object):
+            def get_attr(self, *, pos=None):
+                return 'attr'
+
+        ex = Example()
+        assert ex.attr == 'attr'
+
+
