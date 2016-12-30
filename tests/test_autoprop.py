@@ -193,34 +193,3 @@ def test_deleters_need_one_argument():
         del ex.attr
 
 
-import sys
-if sys.version_info[0] == 2:
-
-    def test_complain_about_old_style_classes():
-        with pytest.raises(TypeError) as err:
-            @autoprop
-            class Example:
-                pass
-
-        assert '@autoprop can only be used with new-style classes' in str(err)
-
-
-if sys.version_info[0] == 3:
-
-    def test_keyword_only_arguments():
-        # inspect.getargspec() chokes methods with keyword-only arguments.
-
-        @autoprop   # (no fold)
-        class Example(object):
-            def get_attr(self, *, pos=None):
-                return 'attr'
-            def set_attr(self, *, new_value):
-                pass
-
-        ex = Example()
-        assert ex.attr == 'attr'
-
-        with pytest.raises(AttributeError):
-            ex.attr = 'setter'
-
-
