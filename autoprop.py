@@ -46,7 +46,7 @@ def autoprop(cls):
     return cls
 
 
-autoprop.__version__ = '0.0.1'
+autoprop.__version__ = '0.0.2'
 
 # Abuse the import system so that the module itself can be used as a decorator.  
 # This is a very simple intended only to cut-down on boilerplate, so I think 
