@@ -2,7 +2,7 @@
 
 class autoprop(object):
 
-    __version__ = '0.0.2'
+    __version__ = '0.0.3'
     property = type('property', (property,), {})
 
     def __new__(self, cls):
