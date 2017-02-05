@@ -36,8 +36,12 @@ def autoprop(cls):
         accessors[name][prefix] = method
 
     for name in accessors:
-        if not name in cls.__dict__:
-            setattr(cls, name, property(
+        attr_doesnt_exist = not hasattr(cls, name)
+        attr_is_autoprop = isinstance(
+                getattr(cls, name, None), autoprop.property)
+
+        if attr_doesnt_exist or attr_is_autoprop:
+            setattr(cls, name, autoprop.property(
                 accessors[name].get('get'),
                 accessors[name].get('set'),
                 accessors[name].get('del'),
@@ -47,10 +51,10 @@ def autoprop(cls):
 
 
 autoprop.__version__ = '0.0.2'
+autoprop.property = type('property', (property,), {})
 
 # Abuse the import system so that the module itself can be used as a decorator.  
-# This is a very simple intended only to cut-down on boilerplate, so I think 
+# This is a simple module intended only to cut-down on boilerplate, so I think 
 # the trade-off between magicalness and ease-of-use is justified in this case.
 import sys
 sys.modules[__name__] = autoprop
-

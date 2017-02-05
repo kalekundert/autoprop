@@ -17,10 +17,10 @@ and setters) to masquerade as regular attributes.  This makes it possible to
 provide transparent APIs for classes that need to cache results, lazily load 
 data, maintain invariants, or react in any other way to attribute access.
 
-Unfortunately, making a property requires a fair amount of boilerplate code.  
-There are a few ways to do it, but the most common and most succinct requires 
-you to decorate two functions (with two different decorators) and to type the 
-name of the attribute three times::
+Unfortunately, making a property requires an annoying amount of boilerplate 
+code.  There are a few ways to do it, but the most common and most succinct 
+requires you to decorate two functions (with two different decorators) and to 
+type the name of the attribute three times::
 
     class RegularProperty:
         
@@ -111,14 +111,15 @@ to follow the same naming conventions as any getters that can be::
             if i == 1: self.y = new_coord
 
 In this way, users of your class can always expect to find accessors named 
-``get_*`` and ``set_*``, and can always expect to find properties for basic 
-attributes that don't need any extra information.
+``get_*`` and ``set_*``, and properties corresponding to those accessors for 
+basic attributes that don't need any extra information.
 
 The second criterion is that the property must have a name which is not already 
 in use.  This guarantees that nothing you explicitly add to your class will be 
 overwritten, and it gives you the ability to customize how certain properties 
-are defined if you'd so like.  Note that this criterion does not apply to names 
-defined in any superclasses, so if you overwrite some accessors defined in a 
-superclass, you'll get new properties that refer to the overridden accessors 
-and not be left with stale references to the superclass accessors.
+are defined if you'd so like.  Note that this criterion does not apply to 
+properties that ``autoprop`` itself created.  This really just means that if 
+you overwrite some accessors defined in a superclass, you'll get new properties 
+that refer to the overridden accessors and not be left with stale references to 
+the superclass accessors.
 

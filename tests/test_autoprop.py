@@ -4,7 +4,7 @@ import pytest
 import autoprop
 
 def test_accessors():
-    @autoprop   # (no fold)
+    @autoprop #
     class Example(object):
         def get_attr(self):
             return 'attr'
@@ -12,7 +12,7 @@ def test_accessors():
     ex = Example()
     assert ex.attr == 'attr'
 
-    @autoprop   # (no fold)
+    @autoprop #
     class Example(object):
         def set_attr(self, attr):
             self._attr = 'new ' + attr
@@ -21,7 +21,7 @@ def test_accessors():
     ex.attr = 'attr'
     assert ex._attr == 'new attr'
 
-    @autoprop   # (no fold)
+    @autoprop #
     class Example(object):
         def del_attr(self):
             self._attr = None
@@ -30,7 +30,7 @@ def test_accessors():
     del ex.attr
     assert ex._attr is None
 
-    @autoprop   # (no fold)
+    @autoprop #
     class Example(object):
         def get_attr(self):
             return self._attr
@@ -41,7 +41,7 @@ def test_accessors():
     ex.attr = 'attr'
     assert ex.attr == 'new attr'
 
-    @autoprop   # (no fold)
+    @autoprop #
     class Example(object):
         def get_attr(self):
             return self._attr
@@ -57,7 +57,7 @@ def test_accessors():
     assert ex.attr is None
 
 def test_ignore_similar_names():
-    @autoprop   # (no fold)
+    @autoprop #
     class Example(object):
         def getattr(self):
             return 'attr'
@@ -67,7 +67,7 @@ def test_ignore_similar_names():
         ex.attr
 
 def test_ignore_empty_names():
-    @autoprop   # (no fold)
+    @autoprop #
     class Example(object):
         def get_(self):
             return 'get'
@@ -77,7 +77,7 @@ def test_ignore_empty_names():
         getattr(ex, '')
 
 def test_ignore_non_methods():
-    @autoprop   # (no fold)
+    @autoprop #
     class Example(object):
         get_attr = 'attr'
 
@@ -85,15 +85,43 @@ def test_ignore_non_methods():
     with pytest.raises(AttributeError):
         ex.attr
 
-def test_inheritance():
-    @autoprop   # (no fold)
+def test_dont_overwrite_existing_attributes():
+    @autoprop #
+    class Example(object):
+        attr = 'class var'
+        def get_attr(self):
+            return 'attr'
+
+    ex = Example()
+    assert ex.attr == 'class var'
+
+def test_dont_overwrite_inherited_attributes():
+    @autoprop #
+    class Parent(object):
+        attr = 'class var'
+        def get_attr(self):
+            return 'parent'
+
+    @autoprop #
+    class Child(Parent):
+        def get_attr(self):
+            return 'child'
+
+    parent = Parent()
+    child = Child()
+
+    assert parent.attr == 'class var'
+    assert child.attr == 'class var'
+
+def test_overwrite_inherited_autoprops():
+    @autoprop #
     class Parent(object):
         def get_attr(self):
             return 'parent'
         def get_overloaded_attr(self):
             return 'parent'
 
-    @autoprop   # (no fold)
+    @autoprop #
     class Child(Parent):
         def get_overloaded_attr(self):
             return 'child'
@@ -106,18 +134,8 @@ def test_inheritance():
     assert child.attr == 'parent'
     assert child.overloaded_attr == 'child'
 
-def test_dont_overwrite_existing_attributes():
-    @autoprop   # (no fold)
-    class Example(object):
-        attr = 'class var'
-        def get_attr(self):
-            return 'attr'
-
-    ex = Example()
-    assert ex.attr == 'class var'
-
 def test_optional_arguments():
-    @autoprop   # (no fold)
+    @autoprop #
     class Example(object):
         def get_attr(self, pos=None, *args, **kwargs):
             return self._attr
@@ -134,7 +152,7 @@ def test_optional_arguments():
     assert ex.attr == None
 
 def test_getters_need_one_argument():
-    @autoprop   # (no fold)
+    @autoprop #
     class Example(object):
         def get_attr():
             return 'attr'
@@ -143,7 +161,7 @@ def test_getters_need_one_argument():
     with pytest.raises(AttributeError):
         ex.attr
 
-    @autoprop   # (no fold)
+    @autoprop #
     class Example(object):
         def get_attr(self, more_info):
             return 'attr'
@@ -153,7 +171,7 @@ def test_getters_need_one_argument():
         ex.attr
 
 def test_setters_need_two_arguments():
-    @autoprop   # (no fold)
+    @autoprop #
     class Example(object):
         def set_attr(self):
             self._attr = 'no args'
@@ -163,7 +181,7 @@ def test_setters_need_two_arguments():
     with pytest.raises(AttributeError):
         assert ex._attr != 'no args'
 
-    @autoprop   # (no fold)
+    @autoprop #
     class Example(object):
         def set_attr(self, new_value, more_info):
             self._attr = 'two args'
@@ -174,7 +192,7 @@ def test_setters_need_two_arguments():
         assert ex._attr != 'two args'
 
 def test_deleters_need_one_argument():
-    @autoprop   # (no fold)
+    @autoprop #
     class Example(object):
         def del_attr():
             pass
@@ -183,7 +201,7 @@ def test_deleters_need_one_argument():
     with pytest.raises(AttributeError):
         del ex.attr
 
-    @autoprop   # (no fold)
+    @autoprop #
     class Example(object):
         def del_attr(self, more_info):
             pass
