@@ -5,11 +5,23 @@ class autoprop(object):
     __version__ = '0.0.3'
     property = type('property', (property,), {})
 
-    @staticmethod
-    def cache(f):
+    class _Cache:
+        __slots__ = ('value', 'is_stale')
+
+        def __init__(self):
+            self.value = None
+            self.is_stale = True
+
+    @classmethod
+    def cache(cls, f):
         if not f.__name__.startswith('get_'):
             raise ValueError("only getters can be cached")
-        f._autoprop_cache = True
+
+        # In python2, you can assign attributes to functions but not to bound/ 
+        # unbound methods (see PEP 232).  However, methods allow read-only 
+        # access to attributes of the underlying function.  So here we give the 
+        # function a mutable cache instance that can be manipulated later.
+        f._autoprop_cache = cls._Cache()
         return f
 
     def __new__(self, cls):
@@ -51,18 +63,13 @@ class autoprop(object):
             accessors[name][prefix] = method
 
         def use_cache(getter):
-            getter._autoprop_value = None
-            getter._autoprop_stale = True
 
             @wraps(getter)
             def wrapper(*args, **kwargs):
-                if getter._autoprop_stale:
-                    getter._autoprop_value = getter(*args, **kwargs)
-                    getter._autoprop_stale = False
-                    print('Refreshing cache for', id(getter), getter._autoprop_value)
-                else:
-                    print('Using cache for', id(getter), getter._autoprop_value)
-                return getter._autoprop_value
+                if getter._autoprop_cache.is_stale:
+                    getter._autoprop_cache.value = getter(*args, **kwargs)
+                    getter._autoprop_cache.is_stale = False
+                return getter._autoprop_cache.value
 
             return wrapper
 
@@ -72,8 +79,7 @@ class autoprop(object):
 
             @wraps(f)
             def wrapper(*args, **kwargs):
-                print('Clearing cache for:', id(getter), f)
-                getter._autoprop_stale = True
+                getter._autoprop_cache.is_stale = True
                 return f(*args, **kwargs)
 
             return wrapper
@@ -89,9 +95,9 @@ class autoprop(object):
             setter  = accessors[name].get('set')
             deleter = accessors[name].get('del')
 
-            # Cache the return value of the getter, if requested.
+            # Cache the return value of the getter, if requested.  For some 
+            # reason setting attributes on method objects 
             if getter and getattr(getter, '_autoprop_cache', False):
-                del getter._autoprop_cache
                 setter  = clear_cache(setter,  getter)
                 deleter = clear_cache(deleter, getter)
                 getter  = use_cache(getter)

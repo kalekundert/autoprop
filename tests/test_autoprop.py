@@ -190,7 +190,6 @@ def test_optional_arguments():
         def get_attr(self, pos=None, *args, **kwargs):
             return self._attr
         def set_attr(self, new_value, pos=None, *args, **kwargs):
-            print('asdasd')
             self._attr = 'new ' + new_value
         def del_attr(self, pos=None, *args, **kwargs):
             self._attr = None
