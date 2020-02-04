@@ -5,12 +5,20 @@ class autoprop(object):
     __version__ = '0.0.3'
     property = type('property', (property,), {})
 
+    @staticmethod
+    def cache(f):
+        if not f.__name__.startswith('get_'):
+            raise ValueError("only getters can be cached")
+        f._autoprop_cache = True
+        return f
+
     def __new__(self, cls):
         # These imports have to be inside autoprop(), otherwise the sys.modules 
         # hack below somehow makes them unavailable when the decorator is 
         # applied.
         import inspect, re
         from collections import defaultdict
+        from functools import wraps
 
         if not hasattr(cls, '__class__'):
             raise TypeError('@autoprop can only be used with new-style classes')
@@ -42,6 +50,34 @@ class autoprop(object):
 
             accessors[name][prefix] = method
 
+        def use_cache(getter):
+            getter._autoprop_value = None
+            getter._autoprop_stale = True
+
+            @wraps(getter)
+            def wrapper(*args, **kwargs):
+                if getter._autoprop_stale:
+                    getter._autoprop_value = getter(*args, **kwargs)
+                    getter._autoprop_stale = False
+                    print('Refreshing cache for', id(getter), getter._autoprop_value)
+                else:
+                    print('Using cache for', id(getter), getter._autoprop_value)
+                return getter._autoprop_value
+
+            return wrapper
+
+        def clear_cache(f, getter):
+            if f is None:
+                return None
+
+            @wraps(f)
+            def wrapper(*args, **kwargs):
+                print('Clearing cache for:', id(getter), f)
+                getter._autoprop_stale = True
+                return f(*args, **kwargs)
+
+            return wrapper
+
         for name in accessors:
             try:
                 attr = getattr(cls, name)
@@ -49,12 +85,20 @@ class autoprop(object):
             except AttributeError:
                 ok_to_overwrite = True
 
+            getter  = accessors[name].get('get')
+            setter  = accessors[name].get('set')
+            deleter = accessors[name].get('del')
+
+            # Cache the return value of the getter, if requested.
+            if getter and getattr(getter, '_autoprop_cache', False):
+                del getter._autoprop_cache
+                setter  = clear_cache(setter,  getter)
+                deleter = clear_cache(deleter, getter)
+                getter  = use_cache(getter)
+
             if ok_to_overwrite:
-                setattr(cls, name, self.property(
-                    accessors[name].get('get'),
-                    accessors[name].get('set'),
-                    accessors[name].get('del'),
-                ))
+                property = self.property(getter, setter, deleter)
+                setattr(cls, name, property)
 
         return cls
 

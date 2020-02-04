@@ -85,6 +85,24 @@ the method ``get_x`` would be used to make a property called ``x``.  Any
 combination of getter, setter, and deleter methods is allowed for each 
 property.
 
+If you have properties that are expensive to calculate, you can indicate that 
+they should be cached::
+
+    @autoprop
+    class Vector2D:
+        
+        ...
+
+        @autoprop.cache
+        def get_magnitude(self):
+            return math.sqrt(self._x**2 + self._y**2)
+
+Cached properties will only be calculated when they are accessed either for the 
+first time ever, or for the first time after calls to the corresponding setter 
+or deleter (if any are defined).
+
+Details
+=======
 Besides having the right prefix, there are two other criteria methods must meet 
 in order to be made into properties.  The first is that they must take the 
 right number of required arguments.  Getters and deleters can't have any 
@@ -122,4 +140,3 @@ properties that ``autoprop`` itself created.  This really just means that if
 you overwrite some accessors defined in a superclass, you'll get new properties 
 that refer to the overridden accessors and not be left with stale references to 
 the superclass accessors.
-
