@@ -2,7 +2,7 @@
 
 class autoprop(object):
 
-    __version__ = '0.0.3'
+    __version__ = '1.0.0'
     property = type('property', (property,), {})
 
     class _Cache:
