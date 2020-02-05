@@ -61,50 +61,156 @@ def test_get_set_del():
     assert ex.attr is None
 
 def test_cache_get():
+
     @autoprop
-    class Example(object): #
-        def __init__(self): #
-            self._attr = 0
+    class Example(object):
+
+        def __init__(self, attr): #
+            self._attr = attr
+
         @autoprop.cache
         def get_attr(self): #
             self._attr += 1
             return self._attr
 
-    ex = Example()
+    ex1 = Example(0)
+    ex2 = Example(2)
 
     # Calling the getter multiple times only call the underlying method once.
-    assert ex.attr == 1
-    assert ex.attr == 1
+    assert ex1.attr == 1
+    assert ex1.attr == 1
+
+    # Different objects are independent of each other.
+    assert ex2.attr == 3
+    assert ex1.attr == 1
+    assert ex2.attr == 3
+    assert ex1.attr == 1
 
 def test_cache_get_set_del():
+
     @autoprop
-    class Example(object): #
-        def __init__(self): #
-            self._attr = 0
+    class Example(object):
+
+        def __init__(self, attr): #
+            self._attr = attr
+
         @autoprop.cache
         def get_attr(self): #
             self._attr += 1
             return self._attr
+
         def set_attr(self, attr): #
             self._attr = attr
+
         def del_attr(self): #
             self._attr = 0
 
-    ex = Example()
+    ex1 = Example(0)
+    ex2 = Example(2)
 
-    # Calling the getter multiple times only call the underlying method once.
-    assert ex.attr == 1
-    assert ex.attr == 1
+    # Calling the getter multiple times only call the underlying method once:
+    assert ex1.attr == 1
+    assert ex1.attr == 1
 
-    # Calling the setter clears the cache.
-    ex.attr = 2
-    assert ex.attr == 3
-    assert ex.attr == 3
+    assert ex2.attr == 3
+    assert ex2.attr == 3
 
-    # Calling the deleter also clears the cache.
-    del ex.attr
-    assert ex.attr == 1
-    assert ex.attr == 1
+    # Calling the setter clears the cache without affecting other instances:
+    ex1.attr = 4
+    assert ex1.attr == 5
+    assert ex1.attr == 5
+
+    assert ex2.attr == 3
+    assert ex2.attr == 3
+
+    # Calling the deleter clears the cache without affecting other instances:
+    del ex1.attr
+    assert ex1.attr == 1
+    assert ex1.attr == 1
+
+    assert ex2.attr == 3
+    assert ex2.attr == 3
+
+def test_dont_cache_non_getter():
+    with pytest.raises(ValueError, match=r"not_a_getter\(\) cannot be cached"):
+
+        @autoprop
+        class Example:
+
+            @autoprop.cache
+            def not_a_getter(self):
+                pass
+
+def test_cache_inheritance():
+    # The child class determines whether or not the attribute is cached.
+
+    @autoprop
+    class Parent(object):
+
+        def __init__(self, v=0): #
+            self._w = v
+            self._x = v
+            self._y = v
+            self._z = v
+
+        @autoprop.cache
+        def get_super_cache(self):
+            self._w += 1
+            return self._w
+
+        @autoprop.cache
+        def get_parent_cache(self): #
+            self._x += 1
+            return self._x
+
+        def get_child_cache(self): #
+            self._y += 1
+            return self._y
+
+        @autoprop.cache
+        def get_both_cache(self): #
+            self._z += 1
+            return self._z
+
+    @autoprop
+    class Child(Parent): #
+
+        def get_parent_cache(self): #
+            self._x += 1
+            return self._x
+
+        @autoprop.cache
+        def get_child_cache(self): #
+            self._y += 1
+            return self._y
+
+        @autoprop.cache
+        def get_both_cache(self): #
+            self._z += 1
+            return self._z
+
+    p = Parent()
+    c = Child(10)
+
+    assert p.parent_cache == 1
+    assert p.parent_cache == 1
+    assert c.parent_cache == 11
+    assert c.parent_cache == 12
+
+    assert p.child_cache == 1
+    assert p.child_cache == 2
+    assert c.child_cache == 11
+    assert c.child_cache == 11
+
+    assert p.both_cache == 1
+    assert p.both_cache == 1
+    assert c.both_cache == 11
+    assert c.both_cache == 11
+
+    assert p.super_cache == 1
+    assert p.super_cache == 1
+    assert c.super_cache == 11
+    assert c.super_cache == 11
 
 def test_ignore_similar_names():
     @autoprop #
@@ -164,16 +270,16 @@ def test_dont_overwrite_inherited_attributes():
     assert child.attr == 'class var'
 
 def test_overwrite_inherited_autoprops():
-    @autoprop #
-    class Parent(object):
-        def get_attr(self):
+    @autoprop
+    class Parent(object): #
+        def get_attr(self): #
             return 'parent'
-        def get_overloaded_attr(self):
+        def get_overloaded_attr(self): #
             return 'parent'
 
-    @autoprop #
-    class Child(Parent):
-        def get_overloaded_attr(self):
+    @autoprop
+    class Child(Parent): #
+        def get_overloaded_attr(self): #
             return 'child'
 
     parent = Parent()

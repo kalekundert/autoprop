@@ -12,19 +12,15 @@ class autoprop(object):
             self.value = None
             self.is_stale = True
 
-    @classmethod
-    def cache(cls, f):
-        if not f.__name__.startswith('get_'):
-            raise ValueError("only getters can be cached")
+        def __repr__(self):
+            import sys
+            return '{}(value={!r}, is_stale={!r})'.format(
+                    self.__class__.__qualname__ if sys.version_info[0] >= 3 else self.__class__.__name__,
+                    self.value,
+                    self.is_stale,
+            )
 
-        # In python2, you can assign attributes to functions but not to bound/ 
-        # unbound methods (see PEP 232).  However, methods allow read-only 
-        # access to attributes of the underlying function.  So here we give the 
-        # function a mutable cache instance that can be manipulated later.
-        f._autoprop_cache = cls._Cache()
-        return f
-
-    def __new__(self, cls):
+    def __new__(autoprop, cls):
         # These imports have to be inside autoprop(), otherwise the sys.modules 
         # hack below somehow makes them unavailable when the decorator is 
         # applied.
@@ -62,14 +58,22 @@ class autoprop(object):
 
             accessors[name][prefix] = method
 
+        def get_cache(self, getter):
+            if not hasattr(self, '_autoprop_cache'):
+                self._autoprop_cache = {}
+            return self._autoprop_cache.setdefault(getter, autoprop._Cache())
+
         def use_cache(getter):
 
             @wraps(getter)
-            def wrapper(*args, **kwargs):
-                if getter._autoprop_cache.is_stale:
-                    getter._autoprop_cache.value = getter(*args, **kwargs)
-                    getter._autoprop_cache.is_stale = False
-                return getter._autoprop_cache.value
+            def wrapper(self, *args, **kwargs):
+                cache = get_cache(self, getter)
+
+                if cache.is_stale:
+                    cache.value = getter(self, *args, **kwargs)
+                    cache.is_stale = False
+
+                return cache.value
 
             return wrapper
 
@@ -78,16 +82,16 @@ class autoprop(object):
                 return None
 
             @wraps(f)
-            def wrapper(*args, **kwargs):
-                getter._autoprop_cache.is_stale = True
-                return f(*args, **kwargs)
+            def wrapper(self, *args, **kwargs):
+                get_cache(self, getter).is_stale = True
+                return f(self, *args, **kwargs)
 
             return wrapper
 
         for name in accessors:
             try:
                 attr = getattr(cls, name)
-                ok_to_overwrite = isinstance(attr, self.property)
+                ok_to_overwrite = isinstance(attr, autoprop.property)
             except AttributeError:
                 ok_to_overwrite = True
 
@@ -97,17 +101,27 @@ class autoprop(object):
 
             # Cache the return value of the getter, if requested.  For some 
             # reason setting attributes on method objects 
-            if getter and getattr(getter, '_autoprop_cache', False):
+            if getter and getattr(getter, '_autoprop_mark_cache', False):
                 setter  = clear_cache(setter,  getter)
                 deleter = clear_cache(deleter, getter)
                 getter  = use_cache(getter)
 
             if ok_to_overwrite:
-                property = self.property(getter, setter, deleter)
+                property = autoprop.property(getter, setter, deleter)
                 setattr(cls, name, property)
 
         return cls
 
+    @staticmethod
+    def cache(f):
+        if not f.__name__.startswith('get_'):
+            import sys
+            raise ValueError("{}() cannot be cached; it's not a getter".format(
+                f.__qualname__ if sys.version_info[0] >= 3 else f.__name__
+            ))
+
+        f._autoprop_mark_cache = True
+        return f
 
 # Abuse the import system so that the module itself can be used as a decorator.  
 # This is a simple module intended only to cut-down on boilerplate, so I think 
