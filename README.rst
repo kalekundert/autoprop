@@ -61,7 +61,7 @@ class decorator::
     >>> import autoprop
     >>>
     >>> @autoprop
-    ... class Vector2D:
+    ... class Vector2D(object):
     ...    
     ...     def __init__(self, x, y):
     ...         self._x = x
@@ -94,7 +94,7 @@ If you have properties that are expensive to calculate, you can indicate that
 they should be cached::
 
     >>> @autoprop
-    ... class Simulation:
+    ... class Simulation(object):
     ...     
     ...     @autoprop.cache
     ...     def get_data(self):
