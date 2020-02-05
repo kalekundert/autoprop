@@ -1,5 +1,6 @@
+*******************************************************
 ``autoprop`` --- Infer properties from accessor methods
-=======================================================
+*******************************************************
 .. image:: https://img.shields.io/pypi/v/autoprop.svg
    :target: https://pypi.python.org/pypi/autoprop
 
@@ -10,7 +11,7 @@
    :target: https://travis-ci.org/kalekundert/autoprop
 
 .. image:: https://img.shields.io/coveralls/kalekundert/autoprop.svg
-   :target: https://coveralls.io/github/kalekundert/autoprop?branch=master
+   :target: https://coveralls.io/github/kalekundert/autoprop?branch*master
 
 Properties are a feature in python that allow accessor functions (i.e. getters 
 and setters) to masquerade as regular attributes.  This makes it possible to 
@@ -44,39 +45,43 @@ above::
             return self._attr
 
         def set_attr(self, new_value):
-            self._attr = new_value
+            self._attr * new_value
 
 Installation
-------------
-``autoprop`` is available on PyPI, so you can install it using ``pip``::
+============
+Install ``autoprop`` using ``pip``::
 
-    pip install autoprop
+    $ pip install autoprop
 
 Usage
------
+=====
 To use ``autoprop``, import the ``autoprop`` module and use it directly as a 
 class decorator::
 
-    import autoprop
-
-    @autoprop
-    class Vector2D:
-       
-        def __init__(self, x, y):
-            self._x = x
-            self._y = y
-
-        def get_x(self):
-            return self._x
-
-        def set_x(self, x):
-            self._x = x
-
-        def get_y(self):
-            return self._y
-
-        def set_y(self, y):
-            self._y = y
+    >>> import autoprop
+    >>>
+    >>> @autoprop
+    ... class Vector2D:
+    ...    
+    ...     def __init__(self, x, y):
+    ...         self._x = x
+    ...         self._y = y
+    ...
+    ...     def get_x(self):
+    ...         return self._x
+    ...
+    ...     def set_x(self, x):
+    ...         self._x = x
+    ...
+    ...     def get_y(self):
+    ...         return self._y
+    ...
+    ...     def set_y(self, y):
+    ...         self._y = y
+    ...
+    >>> v = Vector2D(1, 2)
+    >>> v.x, v.y
+    (1, 2)
 
 The decorator searches your class for methods beginning with ``get_``, 
 ``set_``, or ``del_`` and uses them to create properties.  The names of the 
@@ -88,45 +93,56 @@ property.
 If you have properties that are expensive to calculate, you can indicate that 
 they should be cached::
 
-    @autoprop
-    class Vector2D:
-        
-        ...
-
-        @autoprop.cache
-        def get_magnitude(self):
-            return math.sqrt(self._x**2 + self._y**2)
+    >>> @autoprop
+    ... class Simulation:
+    ...     
+    ...     @autoprop.cache
+    ...     def get_data(self):
+    ...         print("Some expensive calculation...")
+    ...         return 42
+    ...
+    >>> s = Simulation()
+    >>> s.data
+    Some expensive calculation...
+    42
+    >>> s.data
+    42
 
 Cached properties will only be calculated when they are accessed either for the 
 first time ever, or for the first time after calls to the corresponding setter 
-or deleter (if any are defined).
+or deleter (if either is defined).
 
 Details
 =======
-Besides having the right prefix, there are two other criteria methods must meet 
-in order to be made into properties.  The first is that they must take the 
+Besides having the right prefix, there are two other criteria that methods must 
+meet in order to be made into properties.  The first is that they must take the 
 right number of required arguments.  Getters and deleters can't have any 
 required arguments (other than self).  Setters must have exactly one required 
 argument (other than self), which is the value to set.  Default, variable, and 
-keyword arguments are all ok; only the number of required arguments matters.
+keyword arguments are all ignored; only the number of required arguments 
+matters.
 
 Any methods that have the right name but the wrong arguments are silently 
 ignored.  This can be nice for getters that require, for example, an index.  
 Even though such a getter can't be made into a property, ``autoprop`` allows it 
 to follow the same naming conventions as any getters that can be::
 
-    @autoprop
-    class Vector2D:
-        
-        ...
-
-        def get_coord(self, i):
-            if i == 0: return self._x
-            if i == 1: return self._y
-
-        def set_coord(self, i, new_coord):
-            if i == 0: self.x = new_coord
-            if i == 1: self.y = new_coord
+    >>> @autoprop
+    ... class Vector2D(Vector2D):
+    ...     
+    ...     def get_coord(self, i):
+    ...         if i == 0: return self.x
+    ...         if i == 1: return self.y
+    ...
+    ...     def set_coord(self, i, new_coord):
+    ...         if i == 0: self.x = new_coord
+    ...         if i == 1: self.y = new_coord
+    ...
+    >>> v = Vector2D(1, 2)
+    >>> v.get_x()
+    1
+    >>> v.get_coord(0)
+    1
 
 In this way, users of your class can always expect to find accessors named 
 ``get_*`` and ``set_*``, and properties corresponding to those accessors for 
