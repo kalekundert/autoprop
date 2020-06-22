@@ -268,7 +268,7 @@ def test_overwrite_inherited_autoprops_1():
 def test_overwrite_inherited_autoprops_2():
 
     @autoprop
-    class Parent:
+    class Parent(object):
         def __init__(self): #
             self._attr = 'attr'
         def get_attr(self): #
@@ -283,12 +283,12 @@ def test_overwrite_inherited_autoprops_2():
     @autoprop
     class Child2(Parent):
         def get_attr(self): #
-            return super().attr + '-get2'
+            return self._attr + '-get2'
 
     @autoprop
     class Child3(Parent):
         def get_attr(self): #
-            return super().attr + '-get3'
+            return self._attr + '-get3'
         def set_attr(self, attr): #
             self._attr = attr + '-set3'
 
@@ -320,7 +320,7 @@ def test_dont_overwrite_partially_inherited_autoprops():
     # used in a property, but not the right arguments.
 
     @autoprop
-    class Parent: #
+    class Parent(object): #
         def get_attr(self): #
             return 'attr'
         def set_attr(self, arg1, arg2): #
