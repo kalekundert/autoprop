@@ -38,14 +38,16 @@ class autoprop(object):
         accessors = defaultdict(dict)
         expected_num_args = {'get': 0, 'set': 1, 'del': 0}
 
-        # The accessors we're searching for are considered methods in python2 
-        # and functions in python3.  They behave the same either way.
-        ismethod = lambda x: inspect.ismethod(x) or inspect.isfunction(x)
+        def is_accessor(attr_name, attr):
+            # The accessors we're searching for are considered methods in 
+            # python2 and functions in python3.  They behave the same either 
+            # way.
+            if not inspect.ismethod(attr) and not inspect.isfunction(attr):
+                return False
 
-        for method_name, method in inspect.getmembers(cls, ismethod):
-            accessor_match = re.match('(get|set|del)_(.+)', method_name)
+            accessor_match = re.match('(get|set|del)_(.+)', attr_name)
             if not accessor_match:
-                continue
+                return False
 
             # Suppress a warning by using getfullargspec() if it's available 
             # and getargspec() if it's not.
@@ -53,15 +55,30 @@ class autoprop(object):
             except ImportError: from inspect import getargspec
 
             prefix, name = accessor_match.groups()
-            arg_spec = getargspec(method)
+            arg_spec = getargspec(attr)
             num_args = len(arg_spec.args) - len(arg_spec.defaults or ())
             num_args_minus_self = num_args - 1
 
             if num_args_minus_self != expected_num_args[prefix]:
-                continue
+                return False
 
-            accessors[name][prefix] = method
+            return name, prefix
 
+        def get_accessor(name, prefix):
+            # If we found the accessor in this class, return it,
+            try:
+                return accessors[name][prefix]
+
+            # Otherwise, look for a suitable method in parent classes.
+            except KeyError:
+
+                try:
+                    full_name = '%s_%s' % (prefix, name)
+                    attr = getattr(cls, full_name)
+                except AttributeError:
+                    return None
+                else:
+                    return attr if is_accessor(full_name, attr) else None
         def get_cache(self, getter):
             if not hasattr(self, '_autoprop_cache'):
                 self._autoprop_cache = {}
@@ -92,6 +109,12 @@ class autoprop(object):
 
             return wrapper
 
+        for attr_name, attr in cls.__dict__.items():
+            keys = is_accessor(attr_name, attr)
+            if keys:
+                name, prefix = keys
+                accessors[name][prefix] = attr
+
         for name in accessors:
             try:
                 attr = getattr(cls, name)
@@ -99,9 +122,9 @@ class autoprop(object):
             except AttributeError:
                 ok_to_overwrite = True
 
-            getter  = accessors[name].get('get')
-            setter  = accessors[name].get('set')
-            deleter = accessors[name].get('del')
+            getter  = get_accessor(name, 'get')
+            setter  = get_accessor(name, 'set')
+            deleter = get_accessor(name, 'del')
 
             # Cache the return value of the getter, if requested.  For some 
             # reason setting attributes on method objects 
