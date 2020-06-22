@@ -3,6 +3,10 @@
 import pytest
 import autoprop
 
+def test_metadata():
+    assert hasattr(autoprop, '__doc__')
+    assert hasattr(autoprop, '__version__')
+
 def test_get():
     @autoprop
     class Example(object): #

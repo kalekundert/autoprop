@@ -1,0 +1,37 @@
+[build-system]
+requires = ["flit"]
+build-backend = "flit.buildapi"
+
+[tool.flit.metadata]
+module = "autoprop"
+author = "Kale Kundert"
+author-email = "kale@thekunderts.net"
+home-page = 'https://github.com/kalekundert/autoprop'
+description-file = 'README.rst'
+keywords = 'property,properties,accessor,accessors,getter,setter'
+classifiers = [
+  'Development Status :: 4 - Beta',
+  'Intended Audience :: Developers',
+  'License :: OSI Approved :: MIT License',
+  'Natural Language :: English',
+  'Programming Language :: Python :: 2',
+  'Programming Language :: Python :: 3',
+  'Topic :: Software Development :: Libraries',
+]
+
+[tool.flit.metadata.requires-extra]
+tests = [
+  'pytest',
+  'pytest-cov',
+  'coveralls',
+]
+
+[tool.flit.metadata.urls]
+'Version Control' = 'https://github.com/kalekundert/autoprop'
+'Bug Tracker' = 'https://github.com/kalekundert/autoprop/issues'
+'Continuous Integration' = 'https://travis-ci.org/kalekundert/autoprop'
+'Test Coverage' = 'https://coveralls.io/github/kalekundert/autoprop'
+
+[tool.semantic_release]
+version_variable = 'autoprop/__init__.py:__version__'
+

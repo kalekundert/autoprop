@@ -7,11 +7,11 @@
 .. image:: https://img.shields.io/pypi/pyversions/autoprop.svg
    :target: https://pypi.python.org/pypi/autoprop
 
-.. image:: https://img.shields.io/travis/kalekundert/autoprop.svg
-   :target: https://travis-ci.org/kalekundert/autoprop
+.. image:: https://img.shields.io/github/workflow/status/kalekundert/autoprop/Test%20and%20release/master
+   :target: https://github.com/kalekundert/autoprop/actions
 
 .. image:: https://img.shields.io/coveralls/kalekundert/autoprop.svg
-   :target: https://coveralls.io/github/kalekundert/autoprop?branch*master
+   :target: https://coveralls.io/github/kalekundert/autoprop?branch=master
 
 Properties are a feature in python that allow accessor functions (i.e. getters 
 and setters) to masquerade as regular attributes.  This makes it possible to 
