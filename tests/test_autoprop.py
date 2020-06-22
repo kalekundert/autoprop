@@ -139,10 +139,9 @@ def test_dont_cache_non_getter():
     with pytest.raises(ValueError, match=r"not_a_getter\(\) cannot be cached"):
 
         @autoprop
-        class Example:
-
+        class Example: #
             @autoprop.cache
-            def not_a_getter(self):
+            def not_a_getter(self): #
                 pass
 
 def test_cache_inheritance():
@@ -158,7 +157,7 @@ def test_cache_inheritance():
             self._z = v
 
         @autoprop.cache
-        def get_super_cache(self):
+        def get_super_cache(self): #
             self._w += 1
             return self._w
 
@@ -177,7 +176,7 @@ def test_cache_inheritance():
             return self._z
 
     @autoprop
-    class Child(Parent): #
+    class Child(Parent):
 
         def get_parent_cache(self): #
             self._x += 1
@@ -217,8 +216,8 @@ def test_cache_inheritance():
     assert c.super_cache == 11
 
 def test_ignore_similar_names():
-    @autoprop #
-    class Example(object):
+    @autoprop
+    class Example(object): #
         def getattr(self):
             return 'attr'
 
@@ -227,8 +226,8 @@ def test_ignore_similar_names():
         ex.attr
 
 def test_ignore_empty_names():
-    @autoprop #
-    class Example(object):
+    @autoprop
+    class Example(object): #
         def get_(self):
             return 'get'
 
@@ -237,43 +236,15 @@ def test_ignore_empty_names():
         getattr(ex, '')
 
 def test_ignore_non_methods():
-    @autoprop #
-    class Example(object):
+    @autoprop
+    class Example(object): #
         get_attr = 'attr'
 
     ex = Example()
     with pytest.raises(AttributeError):
         ex.attr
 
-def test_dont_overwrite_existing_attributes():
-    @autoprop #
-    class Example(object):
-        attr = 'class var'
-        def get_attr(self):
-            return 'attr'
-
-    ex = Example()
-    assert ex.attr == 'class var'
-
-def test_dont_overwrite_inherited_attributes():
-    @autoprop #
-    class Parent(object):
-        attr = 'class var'
-        def get_attr(self):
-            return 'parent'
-
-    @autoprop #
-    class Child(Parent):
-        def get_attr(self):
-            return 'child'
-
-    parent = Parent()
-    child = Child()
-
-    assert parent.attr == 'class var'
-    assert child.attr == 'class var'
-
-def test_overwrite_inherited_autoprops():
+def test_overwrite_inherited_autoprops_1():
     @autoprop
     class Parent(object): #
         def get_attr(self): #
@@ -293,6 +264,106 @@ def test_overwrite_inherited_autoprops():
     assert parent.overloaded_attr == 'parent'
     assert child.attr == 'parent'
     assert child.overloaded_attr == 'child'
+
+def test_overwrite_inherited_autoprops_2():
+
+    @autoprop
+    class Parent(object):
+        def __init__(self): #
+            self._attr = 'attr'
+        def get_attr(self): #
+            return self._attr
+        def set_attr(self, attr): #
+            self._attr = attr
+
+    @autoprop
+    class Child1(Parent):
+        pass
+
+    @autoprop
+    class Child2(Parent):
+        def get_attr(self): #
+            return self._attr + '-get2'
+
+    @autoprop
+    class Child3(Parent):
+        def get_attr(self): #
+            return self._attr + '-get3'
+        def set_attr(self, attr): #
+            self._attr = attr + '-set3'
+
+    assert 'attr' in Parent.__dict__
+    assert 'attr' not in Child1.__dict__
+    assert 'attr' in Child2.__dict__
+    assert 'attr' in Child3.__dict__
+
+    p = Parent()
+    c1 = Child1()
+    c2 = Child2()
+    c3 = Child3()
+
+    assert p.attr == 'attr'
+    assert c1.attr == 'attr'
+    assert c2.attr == 'attr-get2'
+    assert c3.attr == 'attr-get3'
+
+    c1.attr = 'xyz'
+    c2.attr = 'xyz'
+    c3.attr = 'xyz'
+
+    assert c1.attr == 'xyz'
+    assert c2.attr == 'xyz-get2'
+    assert c3.attr == 'xyz-set3-get3'
+
+def test_dont_overwrite_partially_inherited_autoprops():
+    # Tricky case where the parent class has a method with the right name to be 
+    # used in a property, but not the right arguments.
+
+    @autoprop
+    class Parent(object): #
+        def get_attr(self): #
+            return 'attr'
+        def set_attr(self, arg1, arg2): #
+            pass
+
+    @autoprop
+    class Child(Parent): #
+        def get_attr(self): #
+            return 'attr-child'
+
+    p = Parent()
+    c = Child()
+
+    with pytest.raises(AttributeError):
+        c.attr = 'setter'
+
+def test_dont_overwrite_existing_attributes():
+    @autoprop
+    class Example(object): #
+        attr = 'class var'
+        def get_attr(self): #
+            return 'attr'
+
+    ex = Example()
+    assert ex.attr == 'class var'
+
+def test_dont_overwrite_inherited_attributes():
+    @autoprop
+    class Parent(object): #
+        attr = 'class var'
+        def get_attr(self): #
+            return 'parent'
+
+    @autoprop
+    class Child(Parent): #
+        def get_attr(self): #
+            return 'child'
+
+    parent = Parent()
+    child = Child()
+
+    assert parent.attr == 'class var'
+    assert child.attr == 'class var'
 
 def test_optional_arguments():
     @autoprop #
