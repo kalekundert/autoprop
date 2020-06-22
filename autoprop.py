@@ -2,11 +2,9 @@
 
 """Infer properties from accessor methods"""
 
-__version__ = '1.0.1'
-
 class autoprop(object):
     __doc__ = __doc__
-    __version__ = __version__
+    __version__ = '1.0.1'
     property = type('property', (property,), {})
 
     class _Cache:
