@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 
-class autoprop(object):
+"""Infer properties from accessor methods"""
 
-    __version__ = '1.0.1'
+__version__ = '1.0.1'
+
+class autoprop(object):
+    __doc__ = __doc__
+    __version__ = __version__
     property = type('property', (property,), {})
 
     class _Cache:

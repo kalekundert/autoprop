@@ -8,7 +8,7 @@ author = "Kale Kundert"
 author-email = "kale@thekunderts.net"
 home-page = 'https://github.com/kalekundert/autoprop'
 description-file = 'README.rst'
-keywords='property,properties,accessor,accessors,getter,setter'
+keywords = 'property,properties,accessor,accessors,getter,setter'
 classifiers = [
   'Development Status :: 4 - Beta',
   'Intended Audience :: Developers',
