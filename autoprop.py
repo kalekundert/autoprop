@@ -4,7 +4,7 @@
 
 class autoprop(object):
     __doc__ = __doc__
-    __version__ = '1.0.1'
+    __version__ = '1.0.2'
     property = type('property', (property,), {})
 
     class _Cache:
