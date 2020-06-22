@@ -4,7 +4,7 @@ import pytest
 import autoprop
 
 def test_keyword_only_arguments():
-    # inspect.getargspec() chokes methods with keyword-only arguments.
+    # inspect.getargspec() chokes on methods with keyword-only arguments.
 
     @autoprop   # (no fold)
     class Example(object):
