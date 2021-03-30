@@ -9,7 +9,7 @@ def test_metadata():
 
 def test_get():
     @autoprop
-    class Example(object): #
+    class Example: #
         def get_attr(self): #
             return 'attr'
 
@@ -18,207 +18,56 @@ def test_get():
 
 def test_set():
     @autoprop
-    class Example(object): #
+    class Example: #
         def set_attr(self, attr): #
-            self._attr = 'new ' + attr
+            self._attr = 'set ' + attr
 
     ex = Example()
     ex.attr = 'attr'
-    assert ex._attr == 'new attr'
+    assert ex._attr == 'set attr'
 
 def test_del():
     @autoprop
-    class Example(object): #
+    class Example: #
         def del_attr(self): #
-            self._attr = None
+            self._attr = 'del'
 
     ex = Example()
     del ex.attr
-    assert ex._attr is None
+    assert ex._attr is 'del'
 
 def test_get_set():
     @autoprop
-    class Example(object): #
+    class Example: #
         def get_attr(self): #
             return self._attr
         def set_attr(self, attr): #
-            self._attr = 'new ' + attr
+            self._attr = 'set ' + attr
 
     ex = Example()
     ex.attr = 'attr'
-    assert ex.attr == 'new attr'
+    assert ex.attr == 'set attr'
 
 def test_get_set_del():
     @autoprop
-    class Example(object): #
+    class Example: #
         def get_attr(self): #
             return self._attr
         def set_attr(self, attr): #
-            self._attr = 'new ' + attr
+            self._attr = 'set ' + attr
         def del_attr(self): #
-            self._attr = None
+            self._attr = 'del'
 
     ex = Example()
     ex.attr = 'attr'
-    assert ex.attr == 'new attr'
+    assert ex.attr == 'set attr'
     del ex.attr
-    assert ex.attr is None
-
-def test_cache_get():
-
-    @autoprop
-    class Example(object):
-
-        def __init__(self, attr): #
-            self._attr = attr
-
-        @autoprop.cache
-        def get_attr(self): #
-            self._attr += 1
-            return self._attr
-
-    ex1 = Example(0)
-    ex2 = Example(2)
-
-    # Calling the getter multiple times only call the underlying method once.
-    assert ex1.attr == 1
-    assert ex1.attr == 1
-
-    # Different objects are independent of each other.
-    assert ex2.attr == 3
-    assert ex1.attr == 1
-    assert ex2.attr == 3
-    assert ex1.attr == 1
-
-def test_cache_get_set_del():
-
-    @autoprop
-    class Example(object):
-
-        def __init__(self, attr): #
-            self._attr = attr
-
-        @autoprop.cache
-        def get_attr(self): #
-            self._attr += 1
-            return self._attr
-
-        def set_attr(self, attr): #
-            self._attr = attr
-
-        def del_attr(self): #
-            self._attr = 0
-
-    ex1 = Example(0)
-    ex2 = Example(2)
-
-    # Calling the getter multiple times only call the underlying method once:
-    assert ex1.attr == 1
-    assert ex1.attr == 1
-
-    assert ex2.attr == 3
-    assert ex2.attr == 3
-
-    # Calling the setter clears the cache without affecting other instances:
-    ex1.attr = 4
-    assert ex1.attr == 5
-    assert ex1.attr == 5
-
-    assert ex2.attr == 3
-    assert ex2.attr == 3
-
-    # Calling the deleter clears the cache without affecting other instances:
-    del ex1.attr
-    assert ex1.attr == 1
-    assert ex1.attr == 1
-
-    assert ex2.attr == 3
-    assert ex2.attr == 3
-
-def test_dont_cache_non_getter():
-    with pytest.raises(ValueError, match=r"not_a_getter\(\) cannot be cached"):
-
-        @autoprop
-        class Example: #
-            @autoprop.cache
-            def not_a_getter(self): #
-                pass
-
-def test_cache_inheritance():
-    # The child class determines whether or not the attribute is cached.
-
-    @autoprop
-    class Parent(object):
-
-        def __init__(self, v=0): #
-            self._w = v
-            self._x = v
-            self._y = v
-            self._z = v
-
-        @autoprop.cache
-        def get_super_cache(self): #
-            self._w += 1
-            return self._w
-
-        @autoprop.cache
-        def get_parent_cache(self): #
-            self._x += 1
-            return self._x
-
-        def get_child_cache(self): #
-            self._y += 1
-            return self._y
-
-        @autoprop.cache
-        def get_both_cache(self): #
-            self._z += 1
-            return self._z
-
-    @autoprop
-    class Child(Parent):
-
-        def get_parent_cache(self): #
-            self._x += 1
-            return self._x
-
-        @autoprop.cache
-        def get_child_cache(self): #
-            self._y += 1
-            return self._y
-
-        @autoprop.cache
-        def get_both_cache(self): #
-            self._z += 1
-            return self._z
-
-    p = Parent()
-    c = Child(10)
-
-    assert p.parent_cache == 1
-    assert p.parent_cache == 1
-    assert c.parent_cache == 11
-    assert c.parent_cache == 12
-
-    assert p.child_cache == 1
-    assert p.child_cache == 2
-    assert c.child_cache == 11
-    assert c.child_cache == 11
-
-    assert p.both_cache == 1
-    assert p.both_cache == 1
-    assert c.both_cache == 11
-    assert c.both_cache == 11
-
-    assert p.super_cache == 1
-    assert p.super_cache == 1
-    assert c.super_cache == 11
-    assert c.super_cache == 11
+    assert ex.attr == 'del'
 
 def test_ignore_similar_names():
     @autoprop
-    class Example(object): #
-        def getattr(self):
+    class Example: #
+        def getattr(self): #
             return 'attr'
 
     ex = Example()
@@ -227,8 +76,8 @@ def test_ignore_similar_names():
 
 def test_ignore_empty_names():
     @autoprop
-    class Example(object): #
-        def get_(self):
+    class Example: #
+        def get_(self): #
             return 'get'
 
     ex = Example()
@@ -237,16 +86,133 @@ def test_ignore_empty_names():
 
 def test_ignore_non_methods():
     @autoprop
-    class Example(object): #
+    class Example: #
         get_attr = 'attr'
 
     ex = Example()
     with pytest.raises(AttributeError):
         ex.attr
 
+def test_ignore_wrong_args_get():
+    @autoprop
+    class Example: #
+        def get_attr(): #
+            return 'attr'
+
+    ex = Example()
+    with pytest.raises(AttributeError):
+        ex.attr
+
+    @autoprop
+    class Example: #
+        def get_attr(self, more_info): #
+            return 'attr'
+
+    ex = Example()
+    with pytest.raises(AttributeError):
+        ex.attr
+
+def test_ignore_wrong_args_set():
+    @autoprop
+    class Example: #
+        def set_attr(self): #
+            self._attr = 'no args'
+
+    ex = Example()
+    ex.attr = 'attr'
+    with pytest.raises(AttributeError):
+        assert ex._attr != 'no args'
+
+    @autoprop
+    class Example: #
+        def set_attr(self, new_value, more_info): #
+            self._attr = 'two args'
+
+    ex = Example()
+    ex.attr = 'attr'
+    with pytest.raises(AttributeError):
+        assert ex._attr != 'two args'
+
+def test_ignore_wrong_args_del():
+    @autoprop
+    class Example: #
+        def del_attr(): #
+            pass
+
+    ex = Example()
+    with pytest.raises(AttributeError):
+        del ex.attr
+
+    @autoprop
+    class Example: #
+        def del_attr(self, more_info): #
+            pass
+
+    ex = Example()
+    with pytest.raises(AttributeError):
+        del ex.attr
+
+def test_ignore_wrong_args_inherited():
+    # Tricky case where the parent class has methods with the right names to be 
+    # used in autoprops, but not the right arguments.  The child class should 
+    # not use these parent class methods.
+
+    @autoprop
+    class Parent: #
+        def get_attr(self, arg1):
+            pass
+        def set_attr(self, arg1, arg2): #
+            pass
+
+    @autoprop
+    class GetChild(Parent): #
+        def get_attr(self): #
+            return 'attr-child'
+
+    c = GetChild()
+    assert c.attr == 'attr-child'
+    with pytest.raises(AttributeError):
+        c.attr = 'x'
+
+    @autoprop
+    class SetChild(Parent): #
+        def set_attr(self, value): #
+            self._attr = value
+
+    c = SetChild()
+    c.attr = 'x'
+    assert c._attr == 'x'
+    with pytest.raises(AttributeError):
+        c.attr
+
+def test_dont_overwrite_existing_attributes():
+    @autoprop
+    class Example: #
+        attr = 'class var'
+        def get_attr(self): #
+            return 'attr'
+
+    ex = Example()
+    assert ex.attr == 'class var'
+
+def test_overwrite_inherited_attributes():
+    class Parent: #
+        attr = 'parent'
+
+    @autoprop
+    class Child(Parent): #
+        def get_attr(self): #
+            return 'child'
+
+    p = Parent()
+    c = Child()
+
+    assert p.attr == 'parent'
+    assert c.attr == 'child'
+
 def test_overwrite_inherited_autoprops_1():
     @autoprop
-    class Parent(object): #
+    class Parent: #
         def get_attr(self): #
             return 'parent'
         def get_overloaded_attr(self): #
@@ -257,18 +223,18 @@ def test_overwrite_inherited_autoprops_1():
         def get_overloaded_attr(self): #
             return 'child'
 
-    parent = Parent()
-    child = Child()
+    p = Parent()
+    c = Child()
 
-    assert parent.attr == 'parent'
-    assert parent.overloaded_attr == 'parent'
-    assert child.attr == 'parent'
-    assert child.overloaded_attr == 'child'
+    assert p.attr == 'parent'
+    assert p.overloaded_attr == 'parent'
+    assert c.attr == 'parent'
+    assert c.overloaded_attr == 'child'
 
 def test_overwrite_inherited_autoprops_2():
 
     @autoprop
-    class Parent(object):
+    class Parent:
         def __init__(self): #
             self._attr = 'attr'
         def get_attr(self): #
@@ -315,145 +281,157 @@ def test_overwrite_inherited_autoprops_2():
     assert c2.attr == 'xyz-get2'
     assert c3.attr == 'xyz-set3-get3'
 
-def test_dont_overwrite_partially_inherited_autoprops():
-    # Tricky case where the parent class has a method with the right name to be 
-    # used in a property, but not the right arguments.
+def test_partially_inherited_autoprops():
+    # If the child only implements one of the accessors, the others should be 
+    # picked up from the parent class.
 
     @autoprop
-    class Parent(object): #
+    class Parent: #
         def get_attr(self): #
-            return 'attr'
-        def set_attr(self, arg1, arg2): #
-            pass
+            return ['parent get', *self._attr]
+        def set_attr(self, value): #
+            self._attr = ['parent set', value]
+        def del_attr(self): #
+            self._attr = ['parent del']
 
     @autoprop
-    class Child(Parent): #
+    class GetChild(Parent): #
         def get_attr(self): #
-            return 'attr-child'
+            return ['child get', *self._attr]
 
-    p = Parent()
-    c = Child()
-
-    with pytest.raises(AttributeError):
-        c.attr = 'setter'
-
-def test_dont_overwrite_existing_attributes():
-    @autoprop
-    class Example(object): #
-        attr = 'class var'
-        def get_attr(self): #
-            return 'attr'
-
-    ex = Example()
-    assert ex.attr == 'class var'
-
-def test_dont_overwrite_inherited_attributes():
-    @autoprop
-    class Parent(object): #
-        attr = 'class var'
-        def get_attr(self): #
-            return 'parent'
+    c = GetChild()
+    c.attr = 'x'
+    assert c.attr == ['child get', 'parent set', 'x']
+    del c.attr
+    assert c.attr == ['child get', 'parent del']
 
     @autoprop
-    class Child(Parent): #
-        def get_attr(self): #
-            return 'child'
+    class SetChild(Parent): #
+        def set_attr(self, value): #
+            self._attr = ['child set', value]
 
-    parent = Parent()
-    child = Child()
+    c = SetChild()
+    c.attr = 'x'
+    assert c.attr == ['parent get', 'child set', 'x']
+    del c.attr
+    assert c.attr == ['parent get', 'parent del']
 
-    assert parent.attr == 'class var'
-    assert child.attr == 'class var'
+    @autoprop
+    class DelChild(Parent): #
+        def del_attr(self): #
+            self._attr = ['child del']
+
+    c = DelChild()
+    c.attr = 'x'
+    assert c.attr == ['parent get', 'parent set', 'x']
+    del c.attr
+    assert c.attr == ['parent get', 'child del']
 
 def test_optional_arguments():
-    @autoprop #
-    class Example(object):
-        def get_attr(self, pos=None, *args, **kwargs):
-            return self._attr
-        def set_attr(self, new_value, pos=None, *args, **kwargs):
-            self._attr = 'new ' + new_value
-        def del_attr(self, pos=None, *args, **kwargs):
-            self._attr = None
+    @autoprop
+    class Example: #
+        def get_attr(self, pos=None, *args, **kwargs): #
+            return ['get', *self._attr]
+        def set_attr(self, new_value, pos=None, *args, **kwargs): #
+            self._attr = ['set', new_value]
+        def del_attr(self, pos=None, *args, **kwargs): #
+            self._attr = ['del']
 
     ex = Example()
-    ex.attr = 'attr'
-    assert ex.attr == 'new attr'
+    ex.attr = 'x'
+    assert ex.attr == ['get', 'set', 'x']
     del ex.attr
-    assert ex.attr == None
+    assert ex.attr == ['get', 'del']
 
-def test_getters_need_one_argument():
-    @autoprop #
-    class Example(object):
-        def get_attr():
+def test_keyword_only_arguments():
+    # inspect.getargspec() chokes on methods with keyword-only arguments.
+
+    @autoprop   # (no fold)
+    class Example:
+        def get_attr(self, *, pos=None):
             return 'attr'
-
-    ex = Example()
-    with pytest.raises(AttributeError):
-        ex.attr
-
-    @autoprop #
-    class Example(object):
-        def get_attr(self, more_info):
-            return 'attr'
-
-    ex = Example()
-    with pytest.raises(AttributeError):
-        ex.attr
-
-def test_setters_need_two_arguments():
-    @autoprop #
-    class Example(object):
-        def set_attr(self):
-            self._attr = 'no args'
-
-    ex = Example()
-    ex.attr = 'attr'
-    with pytest.raises(AttributeError):
-        assert ex._attr != 'no args'
-
-    @autoprop #
-    class Example(object):
-        def set_attr(self, new_value, more_info):
-            self._attr = 'two args'
-
-    ex = Example()
-    ex.attr = 'attr'
-    with pytest.raises(AttributeError):
-        assert ex._attr != 'two args'
-
-def test_deleters_need_one_argument():
-    @autoprop #
-    class Example(object):
-        def del_attr():
+        def set_attr(self, *, new_value):
             pass
 
     ex = Example()
-    with pytest.raises(AttributeError):
-        del ex.attr
+    assert ex.attr == 'attr'
 
-    @autoprop #
-    class Example(object):
-        def del_attr(self, more_info):
-            pass
-
-    ex = Example()
+    # Even though the setter has one required argument, it's a named argument, 
+    # so it shouldn't count and 'attr' should be defined without a setter.
     with pytest.raises(AttributeError):
-        del ex.attr
+        ex.attr = 'setter'
+
+@pytest.mark.xfail
+def test_classmethod():
+    # I wrote this test when trying to address #1, before realizing that this 
+    # probably isn't possible.  I'm leaving the test cases because the syntax 
+    # is nice in principle, and maybe I'll find a way to implement it some day.
+
+    @autoprop
+    class Example: #
+
+        @classmethod
+        def get_attr(cls): #
+            return ['get', self._attr]
+
+        @classmethod
+        def set_attr(cls, value): #
+            cls._attr = ['set', value]
+
+        @classmethod
+        def del_attr(cls): #
+            cls._attr = ['del']
+
+    debug(Example.__dict__)
+    Example.attr = 'x'
+    assert Example.attr == ['get', 'set', 'x']
+    del Example.attr
+    assert Example.attr == ['get', 'del']
+
+@pytest.mark.xfail
+def test_staticmethod():
+    # I wrote this test when trying to address #1, before realizing that this 
+    # probably isn't possible.  I'm leaving the test cases because the syntax 
+    # is nice in principle, and maybe I'll find a way to implement it some day.
+
+    @autoprop
+    class Example: #
+
+        @staticmethod
+        def get_attr(): #
+            return ['get', self._attr]
+
+        @staticmethod
+        def set_attr(value): #
+            Example._attr = ['set', value]
+
+        @staticmethod
+        def del_attr(): #
+            Example._attr = ['del']
+
+    Example.attr = 'x'
+    assert Example.attr == ['get', 'set', 'x']
+    del Example.attr
+    assert Example.attr == ['get', 'del']
 
 def test_docstrings():
 
-    @autoprop #
-    class Example(object):
+    @autoprop
+    class Example: #
         def get_attr(self): #
             "get attr"
-            return self._attr
+            pass
         def set_attr(self, attr): #
             "set attr"
-            self._attr = 'new ' + attr
+            pass
         def del_attr(self): #
             "del attr"
-            self._attr = None
+            pass
+
+    ex = Example()
 
     # The docstrings on the setter and deleter are ignored, as per the default 
     # behavior of the `property()` decorator.
     assert Example.attr.__doc__ == "get attr"
+
+

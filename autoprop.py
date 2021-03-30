@@ -1,69 +1,147 @@
 #!/usr/bin/env python
 
-"""Infer properties from accessor methods"""
+"""Infer properties from accessor methods."""
 
-class autoprop(object):
-    __doc__ = __doc__
-    __version__ = '1.0.2'
-    property = type('property', (property,), {})
+import sys
+import inspect
+import re
+import functools
+from collections import defaultdict
 
-    class _Cache:
-        __slots__ = ('value', 'is_stale')
+__version__ = '1.0.2'
 
-        def __init__(self):
-            self.value = None
-            self.is_stale = True
+_EXPECTED_NUM_ARGS = {'get': 0, 'set': 1, 'del': 0}
+_CACHE_POLICIES = ['class', 'object', 'property', 'dynamic', 'read-only']
+_CACHE_ATTR = '_autoprop_cache'
+_CACHE_VERSION_ATTR = '_autoprop_cache_version'
+_CACHE_POLICY_ATTR = '_autoprop_cache_policy'
+_REFRESH_ATTR = '_autoprop_refresh'
+_INITIAL_VERSION = 1
+_DEFAULT_POLICY = 'object'
 
-        def __repr__(self):
-            import sys
-            return '{}(value={!r}, is_stale={!r})'.format(
-                    self.__class__.__qualname__ if sys.version_info[0] >= 3 else self.__class__.__name__,
-                    self.value,
-                    self.is_stale,
-            )
+class Cache:
 
-    def __new__(autoprop, cls):
-        # These imports have to be inside autoprop(), otherwise the sys.modules 
-        # hack below somehow makes them unavailable when the decorator is 
-        # applied.
-        import inspect, re
-        from collections import defaultdict
-        from functools import wraps
+    def __init__(self, obj):
+        self.obj = obj
+        self.cls = obj.__class__
 
-        if not hasattr(cls, '__class__'):
-            raise TypeError('@autoprop can only be used with new-style classes')
+        self.values = {}
+        self.cls_versions = {}
+        self.obj_versions = {}
+        self.attr_touched = {}
 
+    def bind(self, attr):
+        return BoundCache(self, attr)
+
+class BoundCache:
+
+    def __init__(self, cache, attr):
+        self.cache = cache
+        self.attr = attr
+
+    def is_stale(self, policy):
+        if policy == 'dynamic':
+            return True
+
+        cache = self.cache
+        attr = self.attr
+
+        if attr not in cache.values:
+            return True
+
+        if policy == 'read-only':
+            return False
+
+        if cache.attr_touched.get(attr, False):
+            return True
+
+        if policy == 'property':
+            return False
+
+        v0 = _INITIAL_VERSION - 1
+
+        if cache.obj_versions.get(attr, v0) < get_cache_version(cache.obj):
+            return True
+
+        if policy == 'object':
+            return False
+
+        assert policy == 'class'
+
+        for base in cache.cls.__mro__:
+            my_version = cache.cls_versions.get(base, {}).get(attr, v0)
+            base_version = get_cache_version(base)
+            if my_version < base_version:
+                return True
+
+        return False
+
+    def get(self):
+        return self.cache.values[self.attr]
+
+    def update(self, value):
+        cache = self.cache
+        attr = self.attr
+
+        cache.values[attr] = value
+        cache.attr_touched[attr] = False
+        cache.obj_versions[attr] = get_cache_version(cache.obj)
+
+        # Build this dictionary on the fly to be robust against the (remote) 
+        # possibility that `__mro__` could change at runtime, e.g.:
+        # https://stackoverflow.com/questions/20822850/change-python-mro-at-runtime 
+
+        for base in cache.cls.__mro__:
+            cache.cls_versions.setdefault(base, {})[attr] = \
+                    get_cache_version(base)
+
+    def touch(self):
+        self.cache.attr_touched[self.attr] = True
+
+class CachedProperty(property):
+
+    def __init__(self, name, getter, setter, deleter, policy):
+        super().__init__(getter, setter, deleter)
+        self.name = name
+        self.policy = policy
+
+    def __get__(self, obj, owner=None):
+        # Class attribute access: 
+        if obj is None:
+            return super().__get__(obj, owner)
+
+        # Instance attribute access:
+        cache = self.get_bound_cache(obj)
+
+        if cache.is_stale(self.policy):
+            value = super().__get__(obj, owner)
+            cache.update(value)
+
+        return cache.get()
+
+    def __set__(self, obj, value):
+        cache = self.get_bound_cache(obj)
+        cache.touch()
+        return super().__set__(obj, value)
+
+    def __delete__(self, obj):
+        cache = self.get_bound_cache(obj)
+        cache.touch()
+        return super().__delete__(obj)
+
+    def get_bound_cache(self, obj):
+        cache = get_cache(obj)
+        return cache.bind(self.name)
+
+def autoprop(cache=False, policy=_DEFAULT_POLICY):
+    _check_policy(policy)
+
+    def make_autoprops(cls):
         accessors = defaultdict(dict)
-        expected_num_args = {'get': 0, 'set': 1, 'del': 0}
-
-        def is_accessor(attr_name, attr):
-            # The accessors we're searching for are considered methods in 
-            # python2 and functions in python3.  They behave the same either 
-            # way.
-            if not inspect.ismethod(attr) and not inspect.isfunction(attr):
-                return False
-
-            accessor_match = re.match('(get|set|del)_(.+)', attr_name)
-            if not accessor_match:
-                return False
-
-            # Suppress a warning by using getfullargspec() if it's available 
-            # and getargspec() if it's not.
-            try: from inspect import getfullargspec as getargspec
-            except ImportError: from inspect import getargspec
-
-            prefix, name = accessor_match.groups()
-            arg_spec = getargspec(attr)
-            num_args = len(arg_spec.args) - len(arg_spec.defaults or ())
-            num_args_minus_self = num_args - 1
-
-            if num_args_minus_self != expected_num_args[prefix]:
-                return False
-
-            return name, prefix
+        default_policy = policy if cache else 'dynamic' 
 
         def get_accessor(name, prefix):
-            # If we found the accessor in this class, return it,
+            # If we found the accessor in this class, return it.
             try:
                 return accessors[name][prefix]
 
@@ -76,80 +154,178 @@ class autoprop(object):
                 except AttributeError:
                     return None
                 else:
-                    return attr if is_accessor(full_name, attr) else None
-        def get_cache(self, getter):
-            if not hasattr(self, '_autoprop_cache'):
-                self._autoprop_cache = {}
-            return self._autoprop_cache.setdefault(getter, autoprop._Cache())
+                    return attr if _is_accessor(full_name, attr) else None
 
-        def use_cache(getter):
-
-            @wraps(getter)
-            def wrapper(self, *args, **kwargs):
-                cache = get_cache(self, getter)
-
-                if cache.is_stale:
-                    cache.value = getter(self, *args, **kwargs)
-                    cache.is_stale = False
-
-                return cache.value
-
-            return wrapper
-
-        def clear_cache(f, getter):
+        def increment_cache_version(f, predicate=lambda *args, **kwargs: True):
             if f is None:
-                return None
+                return f
 
-            @wraps(f)
-            def wrapper(self, *args, **kwargs):
-                get_cache(self, getter).is_stale = True
-                return f(self, *args, **kwargs)
+            @functools.wraps(f)
+            def wrapper(*args, **kwargs):
+                if predicate(*args, **kwargs):
+                    if args and isinstance(args[0], cls):
+                        obj = args[0]
+                    else:
+                        obj = cls
+
+                    debug(obj)
+                    version = get_cache_version(obj)
+                    setattr(obj, _CACHE_VERSION_ATTR, version + 1)
+
+                return f(*args, **kwargs)
 
             return wrapper
 
-        for attr_name, attr in cls.__dict__.items():
-            keys = is_accessor(attr_name, attr)
-            if keys:
-                name, prefix = keys
+        for name, attr in cls.__dict__.items():
+            # Because we are iterating through `__dict__`, class/static methods 
+            # will not be bound and will not appear as functions, which is good 
+            # because we cannot make class properties without metaclasses.
+
+            key = _is_accessor(name, attr)
+            if key:
+                name, prefix = key
                 accessors[name][prefix] = attr
 
+            if getattr(attr, _REFRESH_ATTR, False):
+                setattr(cls, name, increment_cache_version(attr))
+
+            # Unpack and repack class/static methods.
+            if isinstance(attr, (classmethod, staticmethod)):
+                attr = type(attr)(increment_cache_version(attr.__func__))
+                setattr(cls, name, attr)
+
         for name in accessors:
-            try:
-                attr = getattr(cls, name)
-                ok_to_overwrite = isinstance(attr, autoprop.property)
-            except AttributeError:
-                ok_to_overwrite = True
+
+            # Don't overwrite any attributes defined in this class.  Attributes 
+            # defined in superclasses may be shadowed.
+
+            if name in cls.__dict__:
+                continue
 
             getter  = get_accessor(name, 'get')
-            setter  = get_accessor(name, 'set')
-            deleter = get_accessor(name, 'del')
+            setter  = increment_cache_version(get_accessor(name, 'set'))
+            deleter = increment_cache_version(get_accessor(name, 'del'))
+            policy_ = getattr(getter, _CACHE_POLICY_ATTR, default_policy)
 
-            # Cache the return value of the getter, if requested.  For some 
-            # reason setting attributes on method objects 
-            if getter and getattr(getter, '_autoprop_mark_cache', False):
-                setter  = clear_cache(setter,  getter)
-                deleter = clear_cache(deleter, getter)
-                getter  = use_cache(getter)
+            if policy_ == 'read-only':
+                if getter and setter:
+                    raise ValueError(f"can't specify setter for read-only property: {cls.__qualname__}.{name}\nread-only getter: {getter.__qualname__}\nsetter: {setter.__qualname__}")
+                if getter and deleter:
+                    raise ValueError(f"can't specify deleter for read-only property: {cls.__qualname__}.{name}\nread-only getter: {getter.__qualname__}\ndeleter: {deleter.__qualname__}")
 
-            if ok_to_overwrite:
-                property = autoprop.property(getter, setter, deleter)
-                setattr(cls, name, property)
+            prop = CachedProperty(name, getter, setter, deleter, policy_)
+            setattr(cls, name, prop)
+
+        # Automatically increment the cache on attribute assignment.  
+        # 
+        # Don't do the same for attribute deletion, because (i) classes are not 
+        # supposed to implement `__delattr__()` unless they actually support it 
+        # and (ii) it's easy to get this behavior by decorating `__delattr__()` 
+        # with `@autoprop.refresh`.  Decorating `__setattr__()` is not so easy 
+        # because it leads to infinite recursion.
+
+        try:
+            __setattr__ = cls.__dict__['__setattr__']
+        except KeyError:
+            def __setattr__(self, name, value):
+                super(cls, self).__setattr__(name, value)
+
+        def predicate(self, name, value):
+            return not name.startswith('_autoprop')
+
+        __setattr__ = increment_cache_version(__setattr__, predicate)
+        setattr(cls, '__setattr__', __setattr__)
 
         return cls
 
-    @staticmethod
-    def cache(f):
-        if not f.__name__.startswith('get_'):
-            import sys
-            raise ValueError("{}() cannot be cached; it's not a getter".format(
-                f.__qualname__ if sys.version_info[0] >= 3 else f.__name__
-            ))
+    if inspect.isclass(cache):
+        cls, cache = cache, False
+        return make_autoprops(cls)
+    else:
+        return make_autoprops
 
-        f._autoprop_mark_cache = True
+def cache(policy=_DEFAULT_POLICY):
+
+    def wrapped(f):
+        if not f.__name__.startswith('get_'):
+            raise ValueError(f"can't set a caching policy for {f.__qualname__}; it's not a getter")
+
+        setattr(f, _CACHE_POLICY_ATTR, policy)
         return f
 
-# Abuse the import system so that the module itself can be used as a decorator.  
-# This is a simple module intended only to cut-down on boilerplate, so I think 
-# the trade-off between magicalness and ease-of-use is justified in this case.
-import sys
-sys.modules[__name__] = autoprop
+    if callable(policy):
+        f, policy = policy, _DEFAULT_POLICY
+        return wrapped(f)
+    else:
+        _check_policy(policy)
+        return wrapped
+
+def dynamic(f):
+    return cache(policy='dynamic')(f)
+
+def refresh(f):
+    setattr(f, _REFRESH_ATTR, True)
+    return f
+
+def get_cache(obj):
+    try:
+        cache = getattr(obj, _CACHE_ATTR)
+    except AttributeError:
+        cache = Cache(obj)
+        setattr(obj, _CACHE_ATTR, cache)
+
+    return cache
+
+def get_cache_version(obj):
+    return getattr(obj, _CACHE_VERSION_ATTR, _INITIAL_VERSION)
+
+def clear_cache(obj):
+    try:
+        delattr(obj, _CACHE_ATTR)
+    except AttributeError:
+        pass
+
+
+def _check_policy(policy):
+    if policy not in _CACHE_POLICIES:
+        expected = ', '.join(repr(p) for p in _CACHE_POLICIES)
+        raise ValueError(f"unknown policy {policy!r}, expected one of: {expected}")
+        
+def _is_accessor(name, attr):
+    if not inspect.isfunction(attr):
+        return False
+
+    accessor_match = re.match('(get|set|del)_(.+)', name)
+    if not accessor_match:
+        return False
+
+    def is_required(p):
+        positional = p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD
+        return p.kind in positional and p.default is p.empty
+
+    # The attributes passed to this function must be accessed via `getattr()` 
+    # (e.g. as opposed to `cls.__dict__[]`) because static/class methods are 
+    # not callable until bound to the class.
+
+    prefix, name = accessor_match.groups()
+    sig = inspect.signature(attr)
+    params = sig.parameters.values()
+    num_args = sum(map(is_required, params)) - 1
+
+    if num_args != _EXPECTED_NUM_ARGS[prefix]:
+        return False
+
+    return name, prefix
+
+
+# Hack to make the module directly usable as a decorator.  Only works for 
+# python 3.5 or higher.  See this Stack Overflow post:
+# https://stackoverflow.com/questions/1060796/callable-modules
+
+class CallableModule(sys.modules[__name__].__class__):
+
+    def __call__(self, *args, **kwargs):
+        return autoprop(*args, **kwargs)
+
+sys.modules[__name__].__class__ = CallableModule
+
