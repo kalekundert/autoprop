@@ -168,7 +168,6 @@ def autoprop(cache=False, policy=_DEFAULT_POLICY):
                     else:
                         obj = cls
 
-                    debug(obj)
                     version = get_cache_version(obj)
                     setattr(obj, _CACHE_VERSION_ATTR, version + 1)
 

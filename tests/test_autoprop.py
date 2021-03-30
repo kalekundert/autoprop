@@ -382,7 +382,6 @@ def test_classmethod():
         def del_attr(cls): #
             cls._attr = ['del']
 
-    debug(Example.__dict__)
     Example.attr = 'x'
     assert Example.attr == ['get', 'set', 'x']
     del Example.attr
