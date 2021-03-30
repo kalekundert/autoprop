@@ -190,8 +190,9 @@ def autoprop(cache=False, policy=_DEFAULT_POLICY):
 
             # Unpack and repack class/static methods.
             if isinstance(attr, (classmethod, staticmethod)):
-                attr = type(attr)(increment_cache_version(attr.__func__))
-                setattr(cls, name, attr)
+                if getattr(attr.__func__, _REFRESH_ATTR, False):
+                    attr = type(attr)(increment_cache_version(attr.__func__))
+                    setattr(cls, name, attr)
 
         for name in accessors:
 

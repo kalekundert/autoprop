@@ -58,6 +58,17 @@ def make_policy_test_cls(class_decorator, getter_decorator, inherit_perturbers):
             def refresh_static():
                 pass
 
+            def method(self):
+                pass
+
+            @classmethod
+            def method_cls(cls):
+                pass
+
+            @staticmethod
+            def method_static():
+                pass
+
         @class_decorator
         class MyObj(MyParent):
 
@@ -105,6 +116,17 @@ def make_policy_test_cls(class_decorator, getter_decorator, inherit_perturbers):
             def refresh_static():
                 pass
 
+            def method(self):
+                pass
+
+            @classmethod
+            def method_cls(cls):
+                pass
+
+            @staticmethod
+            def method_static():
+                pass
+
     return MyObj
 
 def make_policy_test_cls_read_only(class_decorator, getter_decorator, inherit_perturbers):
@@ -131,6 +153,17 @@ def make_policy_test_cls_read_only(class_decorator, getter_decorator, inherit_pe
             @staticmethod
             @autoprop.refresh
             def refresh_static():
+                pass
+
+            def method(self):
+                pass
+
+            @classmethod
+            def method_cls(cls):
+                pass
+
+            @staticmethod
+            def method_static():
                 pass
 
         @class_decorator
@@ -174,6 +207,17 @@ def make_policy_test_cls_read_only(class_decorator, getter_decorator, inherit_pe
             def refresh_static():
                 pass
 
+            def method(cls):
+                pass
+
+            @classmethod
+            def method_cls(cls):
+                pass
+
+            @staticmethod
+            def method_static():
+                pass
+
     return MyObj
 
 def make_policy_decorators(policy):
@@ -211,6 +255,15 @@ def refresh_cls(obj):
 def refresh_static(obj):
     obj.refresh_static()
 
+def method(obj):
+    obj.method()
+
+def method_cls(obj):
+    obj.method_cls()
+
+def method_static(obj):
+    obj.method_static()
+
 def noop(obj):
     return obj
 
@@ -228,6 +281,9 @@ def noop(obj):
             (refresh, False),
             (refresh_cls, False),
             (refresh_static, False),
+            (method, False),
+            (method_cls, False),
+            (method_static, False),
             (noop, False),
         ],
 )
@@ -259,6 +315,9 @@ def test_policy_read_only(class_decorator, getter_decorator, perturb, recalculat
             (refresh, False),
             (refresh_cls, False),
             (refresh_static, False),
+            (method, False),
+            (method_cls, False),
+            (method_static, False),
             (noop, False),
         ],
 )
@@ -293,6 +352,9 @@ def test_policy_property(class_decorator, getter_decorator, perturb, recalculate
             (refresh, True),
             (refresh_cls, False),
             (refresh_static, False),
+            (method, False),
+            (method_cls, False),
+            (method_static, False),
             (noop, False),
         ],
 )
@@ -324,6 +386,9 @@ def test_policy_object(class_decorator, getter_decorator, perturb, recalculate, 
             (refresh, True),
             (refresh_cls, True),
             (refresh_static, True),
+            (method, False),
+            (method_cls, False),
+            (method_static, False),
             (noop, False),
         ],
 )
@@ -360,6 +425,9 @@ def test_policy_class(class_decorator, getter_decorator, perturb, recalculate, i
             (refresh, True),
             (refresh_cls, True),
             (refresh_static, True),
+            (method, True),
+            (method_cls, True),
+            (method_static, True),
             (noop, True),
         ],
 )
