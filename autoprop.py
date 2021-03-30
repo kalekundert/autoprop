@@ -8,7 +8,7 @@ import re
 import functools
 from collections import defaultdict
 
-__version__ = '1.0.2'
+__version__ = '2.0.0'
 
 _EXPECTED_NUM_ARGS = {'get': 0, 'set': 1, 'del': 0}
 _CACHE_POLICIES = ['class', 'object', 'property', 'dynamic', 'read-only']
