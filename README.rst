@@ -165,56 +165,56 @@ It's also easy to cache some properties but not others::
     >>> s.expensive
     42
 
-The `autoprop.cache()` decorator accepts a `policy` keyword argument that 
+The ``autoprop.cache()`` decorator accepts a ``policy`` keyword argument that 
 determines when properties will need to be recalculated.  The following 
 policies are understood:
 
-- `object`: This is the default policy.  Properties are recalculated when first 
-  accessed after a change to the object is detected.  Changes are detected in 
-  three ways:
+- ``object``: This is the default policy.  Properties are recalculated when 
+  first accessed after a change to the object is detected.  Changes are 
+  detected in three ways:
 
-  1. One of the setter or deleter methods identified by `autoprop` is called.  
+  1. One of the setter or deleter methods identified by ``autoprop`` is called.  
      This includes if the method is indirectly called via a property.
 
   2. Any attribute of the object is set.  This is detected by applying a 
-     decorator to the class's `__setattr__()` implementation, or providing an 
+     decorator to the class's ``__setattr__()`` implementation, or providing an 
      implementation if one doesn't exist.  For classes that implement 
-     `__setattr__()` and `__getattr__()`, some care may be needed to avoid 
-     infinite recursion (because autoprop may cause these methods to be called 
-     earlier than you would normally expect).
+     ``__setattr__()`` and ``__getattr__()``, some care may be needed to avoid 
+     infinite recurs``__setattr__()`` ion (because autoprop may cause these 
+     methods to be called earlier than you would normally expect).
 
-  3. Any method decorated with `@autoprop.refresh` is called.
+  3. Any method decorated with ``@autoprop.refresh`` is called.
 
-- `class`: Similar to `object`, but `@autoprop.refresh` will work even when 
-  applied to class methods and static methods.  This is not the default because 
-  it adds some overhead and is not often necessary.
+- ``class``: Similar to ``object``, but ``@autoprop.refresh`` will work even 
+  when applied to class methods and static methods.  This is not the default 
+  because it adds some overhead and is not often necessary.
 
-- `property`: Properties are recalculated when first accessed after their own 
+- ``property``: Properties are recalculated when first accessed after their own 
   setter or deleter method has been called (whether directly or indirectly via 
   a parameter).  This is useful for properties that don't depend on any other 
   properties or object attributes.
 
-- `dynamic`: Properties are recalculated every time they are accessed.  Note 
-  that `@autoprop.dynamic` is exactly equivalent to 
-  `@autoprop.cache(policy='dynamic')`.
+- ``dynamic``: Properties are recalculated every time they are accessed.  Note 
+  that ``@autoprop.dynamic`` is exactly equivalent to 
+  ``@autoprop.cache(policy='dynamic')``.
 
-- `immutable`: Properties are never recalculated, and are furthermore not 
+- ``immutable``: Properties are never recalculated, and are furthermore not 
   allowed to have setter or deleter methods (an error will be raised if any 
   such methods are found).  As the name implies, this is for properties and 
   classes that are intended to be immutable.
 
-The default policy is `object`.  The policy provided to a class-level decorator 
-becomes the default for every property in that class, while the policy provided 
-to a method-level decorator applies only to that method.  Note that only getter 
-methods can be given policies.  It is completely ok to give different policies 
-to different getters within the same class.
+The default policy is ``object``.  The policy provided to a class-level 
+decorator becomes the default for every property in that class, while the 
+policy provided to a method-level decorator applies only to that method.  Note 
+that only getter methods can be given policies.  It is completely ok to give 
+different policies to different getters within the same class.
 
 In order for any caching to occur, you must decorate the class with either 
-`@autoprop.cache` or `@autoprop.dynamic`.  The standard `@autoprop` decorator 
-does not configure the class for caching, because doing so adds some overhead 
-and introduces some complexities regarding `__setattr__()`.  Attempting to 
-cache individual properties without enabling caching at the class level will 
-cause an error.
+``@autoprop.cache`` or ``@autoprop.dynamic``.  The standard ``@autoprop`` 
+decorator does not configure the class for caching, because doing so adds some 
+overhead and introduces some complexities regarding ``__setattr__()``.  
+Attempting to cache individual properties without enabling caching at the class 
+level will cause an error.
 
 Details
 =======
