@@ -2,6 +2,7 @@
 
 import pytest
 import autoprop
+from functools import partial
 
 def _test_policy(make_policy_test_cls, class_decorator, getter_decorator, perturb, recalculate, inherit_perturbers):
     MyObj = make_policy_test_cls(
@@ -26,37 +27,39 @@ def _test_policy(make_policy_test_cls, class_decorator, getter_decorator, pertur
     assert o1.x == (3 if recalculate else 1)
     assert o2.x == 2
 
-def make_policy_test_cls(class_decorator, getter_decorator, inherit_perturbers):
+def make_policy_test_cls(class_decorator, getter_decorator, inherit_perturbers, include_setters=True, include_refresh=True):
 
     if inherit_perturbers:
-        @autoprop
+        @autoprop.dynamic
         class MyParent:
 
-            def set_x(self, x):
-                pass
+            if include_setters:
+                def set_x(self, x):
+                    pass
 
-            def del_x(self):
-                pass
+                def del_x(self):
+                    pass
 
-            def set_y(self, y):
-                pass
+                def set_y(self, y):
+                    pass
 
-            def del_y(self):
-                pass
+                def del_y(self):
+                    pass
 
-            @autoprop.refresh
-            def refresh(self):
-                pass
+            if include_refresh:
+                @autoprop.refresh
+                def refresh(self):
+                    pass
 
-            @classmethod
-            @autoprop.refresh
-            def refresh_cls(cls):
-                pass
+                @classmethod
+                @autoprop.refresh
+                def refresh_cls(cls):
+                    pass
 
-            @staticmethod
-            @autoprop.refresh
-            def refresh_static():
-                pass
+                @staticmethod
+                @autoprop.refresh
+                def refresh_static():
+                    pass
 
             def method(self):
                 pass
@@ -90,124 +93,35 @@ def make_policy_test_cls(class_decorator, getter_decorator, inherit_perturbers):
             def get_x(self):
                 return self.d['x']
 
-            def set_x(self, x):
-                pass
+            if include_setters:
+                def set_x(self, x):
+                    pass
 
-            def del_x(self):
-                pass
+                def del_x(self):
+                    pass
 
-            def set_y(self, y):
-                pass
+                def set_y(self, y):
+                    pass
 
-            def del_y(self):
-                pass
+                def del_y(self):
+                    pass
 
-            @autoprop.refresh
-            def refresh(self):
-                pass
+            if include_refresh:
+                @autoprop.refresh
+                def refresh(self):
+                    pass
 
-            @classmethod
-            @autoprop.refresh
-            def refresh_cls(cls):
-                pass
+                @classmethod
+                @autoprop.refresh
+                def refresh_cls(cls):
+                    pass
 
-            @staticmethod
-            @autoprop.refresh
-            def refresh_static():
-                pass
-
-            def method(self):
-                pass
-
-            @classmethod
-            def method_cls(cls):
-                pass
-
-            @staticmethod
-            def method_static():
-                pass
-
-    return MyObj
-
-def make_policy_test_cls_read_only(class_decorator, getter_decorator, inherit_perturbers):
-
-    if inherit_perturbers:
-        @autoprop
-        class MyParent:
-
-            def set_y(self, y):
-                pass
-
-            def del_y(self):
-                pass
-
-            @autoprop.refresh
-            def refresh(self):
-                pass
-
-            @classmethod
-            @autoprop.refresh
-            def refresh_cls(cls):
-                pass
-
-            @staticmethod
-            @autoprop.refresh
-            def refresh_static():
-                pass
+                @staticmethod
+                @autoprop.refresh
+                def refresh_static():
+                    pass
 
             def method(self):
-                pass
-
-            @classmethod
-            def method_cls(cls):
-                pass
-
-            @staticmethod
-            def method_static():
-                pass
-
-        @class_decorator
-        class MyObj(MyParent):
-
-            def __init__(self, x):
-                self.d = {'x': x}
-
-            @getter_decorator
-            def get_x(self):
-                return self.d['x']
-
-    else:
-        @class_decorator
-        class MyObj:
-
-            def __init__(self, x):
-                self.d = {'x': x}
-
-            @getter_decorator
-            def get_x(self):
-                return self.d['x']
-
-            def set_y(self, y):
-                pass
-
-            def del_y(self):
-                pass
-
-            @autoprop.refresh
-            def refresh(self):
-                pass
-
-            @classmethod
-            @autoprop.refresh
-            def refresh_cls(cls):
-                pass
-
-            @staticmethod
-            @autoprop.refresh
-            def refresh_static():
-                pass
-
-            def method(cls):
                 pass
 
             @classmethod
@@ -223,11 +137,17 @@ def make_policy_test_cls_read_only(class_decorator, getter_decorator, inherit_pe
 def make_policy_decorators(policy):
     return [
             (
-                autoprop(cache=True, policy=policy),
+                autoprop.cache(policy=policy),
                 noop,
             ), (
-                autoprop,
+                autoprop.cache,
                 autoprop.cache(policy=policy),
+            ), (
+                autoprop.cache(),
+                autoprop.cache(policy=policy),
+            ), (
+                autoprop.cache,
+                autoprop.mark(policy=policy),
             )
     ]
 
@@ -270,13 +190,11 @@ def noop(obj):
 
 @pytest.mark.parametrize(
         'class_decorator, getter_decorator', 
-            make_policy_decorators('read-only'),
+            make_policy_decorators('immutable'),
 )
 @pytest.mark.parametrize(
         'perturb, recalculate', [
             (autoprop.clear_cache, True),
-            (set_y, False),
-            (del_y, False),
             (set_z, False),
             (refresh, False),
             (refresh_cls, False),
@@ -290,9 +208,9 @@ def noop(obj):
 @pytest.mark.parametrize(
         'inherit_perturbers', [False, True],
 )
-def test_policy_read_only(class_decorator, getter_decorator, perturb, recalculate, inherit_perturbers):
+def test_policy_immutable(class_decorator, getter_decorator, perturb, recalculate, inherit_perturbers):
     _test_policy(
-            make_policy_test_cls_read_only,
+            partial(make_policy_test_cls, include_setters=False),
             class_decorator,
             getter_decorator,
             perturb,
@@ -337,8 +255,8 @@ def test_policy_property(class_decorator, getter_decorator, perturb, recalculate
 @pytest.mark.parametrize(
         'class_decorator, getter_decorator', [
             *make_policy_decorators('object'),
-            (autoprop, autoprop.cache),
-            (autoprop(cache=True), noop),
+            (autoprop.cache, noop),
+            (autoprop.cache(), noop),
         ],
 )
 @pytest.mark.parametrize(
@@ -407,11 +325,9 @@ def test_policy_class(class_decorator, getter_decorator, perturb, recalculate, i
 
 @pytest.mark.parametrize(
         'class_decorator, getter_decorator', [
-            (autoprop, noop),
-            (autoprop, autoprop.cache(policy='dynamic')),
-            (autoprop, autoprop.dynamic),
-            (autoprop(cache=True), autoprop.cache(policy='dynamic')),
-            (autoprop(cache=True), autoprop.dynamic),
+            *make_policy_decorators('dynamic'),
+            (autoprop.cache, autoprop.dynamic),
+            (autoprop.dynamic, noop),
         ],
 )
 @pytest.mark.parametrize(
@@ -444,128 +360,239 @@ def test_policy_dynamic(class_decorator, getter_decorator, perturb, recalculate,
             inherit_perturbers,
     )
 
+@pytest.mark.parametrize(
+        'class_decorator, getter_decorator', [
+            (autoprop, noop)
+        ],
+)
+@pytest.mark.parametrize(
+        'perturb, recalculate', [
+            (autoprop.clear_cache, True),
+            (set_x, True),
+            (del_x, True),
+            (set_y, True),
+            (del_y, True),
+            (set_z, True),
+            (method, True),
+            (method_cls, True),
+            (method_static, True),
+            (noop, True),
+        ],
+)
+@pytest.mark.parametrize(
+        'inherit_perturbers', [False, True],
+)
+def test_policy_no_cache(class_decorator, getter_decorator, perturb, recalculate, inherit_perturbers):
+    _test_policy(
+            partial(make_policy_test_cls, include_refresh=False),
+            class_decorator,
+            getter_decorator,
+            perturb,
+            recalculate,
+            inherit_perturbers,
+    )
+
 
 def test_cache_inheritance():
     # The child class determines whether or not the attribute is cached.
 
-    @autoprop
+    @autoprop.dynamic
     class Parent:
 
-        def __init__(self, v=0): #
-            self._w = v
-            self._x = v
-            self._y = v
-            self._z = v
+        def __init__(self, x): #
+            self.d = {'x': x}
 
         @autoprop.cache
         def get_super_cache(self): #
-            self._w += 1
-            return self._w
+            return self.d['x']
 
         @autoprop.cache
         def get_parent_cache(self): #
-            self._x += 1
-            return self._x
+            return self.d['x']
 
         def get_child_cache(self): #
-            self._y += 1
-            return self._y
+            return self.d['x']
 
         @autoprop.cache
         def get_both_cache(self): #
-            self._z += 1
-            return self._z
+            return self.d['x']
 
-    @autoprop
+    @autoprop.dynamic
     class Child(Parent):
 
         def get_parent_cache(self): #
-            self._x += 1
-            return self._x
+            return self.d['x']
 
         @autoprop.cache
         def get_child_cache(self): #
-            self._y += 1
-            return self._y
+            return self.d['x']
 
         @autoprop.cache
         def get_both_cache(self): #
-            self._z += 1
-            return self._z
+            return self.d['x']
 
-    p = Parent()
-    c = Child(10)
+    p = Parent(1)
+    c = Child(2)
 
+    assert p.super_cache == 1
     assert p.parent_cache == 1
-    assert p.parent_cache == 1
-    assert c.parent_cache == 11
-    assert c.parent_cache == 12
-
     assert p.child_cache == 1
-    assert p.child_cache == 2
-    assert c.child_cache == 11
-    assert c.child_cache == 11
+    assert p.both_cache == 1
 
-    assert p.both_cache == 1
-    assert p.both_cache == 1
-    assert c.both_cache == 11
-    assert c.both_cache == 11
+    assert c.super_cache == 2
+    assert c.parent_cache == 2
+    assert c.child_cache == 2
+    assert c.both_cache == 2
+
+    p.d['x'] = 3
+    c.d['x'] = 4
 
     assert p.super_cache == 1
-    assert p.super_cache == 1
-    assert c.super_cache == 11
-    assert c.super_cache == 11
+    assert p.parent_cache == 1
+    assert p.child_cache == 3
+    assert p.both_cache == 1
 
-def test_read_only_setter_err():
-    with pytest.raises(ValueError) as err:
+    assert c.super_cache == 2
+    assert c.parent_cache == 4
+    assert c.child_cache == 2
+    assert c.both_cache == 2
 
-        @autoprop
-        class MyObj:
+def test_inherit_uncached():
+    # Note that `Child` defines `set_x()` but not `get_x()`.  This means that 
+    # it will create an `x` property, but it will use `Parent.get_x()` when 
+    # doing so.  Because `get_x()` is defined in a class without caching, that 
+    # behavior should extend to the new property, even though getters defined 
+    # in `Child` are cached by default.
 
-            @autoprop.cache(policy='read-only')
-            def get_x(self):
-                pass
+    @autoprop
+    class Parent:
 
-            def set_x(self, x):
-                pass
+        def __init__(self, x):
+            self.d = {'x': x}
 
-    assert err.match(r"can't specify setter for read-only property: .*MyObj\.x")
-    assert err.match(r"read-only getter: .*MyObj\.get_x")
-    assert err.match(r"setter: .*MyObj.set_x")
+        def get_x(self):
+            return self.d['x']
 
-def test_read_only_deleter_err():
-    with pytest.raises(ValueError) as err:
 
-        @autoprop
-        class MyObj:
+    @autoprop.cache
+    class Child(Parent):
 
-            @autoprop.cache(policy='read-only')
-            def get_x(self):
-                pass
+        def set_x(self, x):
+            pass
 
-            def del_x(self):
-                pass
+        def get_y(self):
+            return self.d['x']
 
-    assert err.match(r"can't specify deleter for read-only property: .*MyObj\.x")
-    assert err.match(r"read-only getter: .*MyObj\.get_x")
-    assert err.match(r"deleter: .*MyObj.del_x")
 
-def test_cache_non_getter_err():
+    p = Parent(1)
+    c = Child(2)
+
+    assert p.x == 1
+    assert c.x == 2
+    assert c.y == 2
+
+    p.d['x'] = 3
+    c.d['x'] = 4
+
+    assert p.x == 3  # not cached
+    assert c.x == 4  # not cached
+    assert c.y == 2  # cached
+
+def test_cache_disabled_getter_err():
     with pytest.raises(ValueError) as err:
 
         @autoprop
         class MyObj:
 
             @autoprop.cache
+            def get_x(self):
+                pass
+
+    assert err.match(r"cache disabled: can't specify cache policies")
+    assert err.match(r"class: .*MyObj")
+    assert err.match(r"method: .*MyObj.get_x")
+
+def test_cache_disabled_refresh_err():
+    with pytest.raises(ValueError) as err:
+
+        @autoprop
+        class MyObj:
+
+            @autoprop.refresh
+            def method(self):
+                pass
+
+    assert err.match(r"cache disabled: can't use `@autoprop.refresh`")
+    assert err.match(r"class: .*MyObj")
+    assert err.match(r"method: .*MyObj.method")
+
+def test_cache_disabled_refresh_cls_err():
+    with pytest.raises(ValueError) as err:
+
+        @autoprop
+        class MyObj:
+
+            @classmethod
+            @autoprop.refresh
+            def method(cls):
+                pass
+
+    assert err.match(r"cache disabled: can't use `@autoprop.refresh`")
+    assert err.match(r"class: .*MyObj")
+    assert err.match(r"method: .*MyObj.method")
+
+def test_read_only_setter_err():
+    with pytest.raises(ValueError) as err:
+
+        @autoprop.cache
+        class MyObj:
+
+            @autoprop.cache(policy='immutable')
+            def get_x(self):
+                pass
+
+            def set_x(self, x):
+                pass
+
+    assert err.match(r"can't specify setter for immutable property")
+    assert err.match(r"property: .*MyObj\.x")
+    assert err.match(r"immutable getter: .*MyObj\.get_x")
+    assert err.match(r"setter: .*MyObj.set_x")
+
+def test_read_only_deleter_err():
+    with pytest.raises(ValueError) as err:
+
+        @autoprop.cache
+        class MyObj:
+
+            @autoprop.cache(policy='immutable')
+            def get_x(self):
+                pass
+
+            def del_x(self):
+                pass
+
+    assert err.match(r"can't specify deleter for immutable property")
+    assert err.match(r"property: .*MyObj\.x")
+    assert err.match(r"immutable getter: .*MyObj\.get_x")
+    assert err.match(r"deleter: .*MyObj.del_x")
+
+def test_cache_non_getter_err():
+    with pytest.raises(ValueError) as err:
+
+        @autoprop.cache
+        class MyObj:
+
+            @autoprop.cache
             def non_getter(self):
                 pass
 
-    assert err.match(r"can't set a caching policy for .*MyObj\.non_getter; it's not a getter")
+    assert err.match(r"can't cache .*MyObj\.non_getter; it's not a getter")
 
 def test_unknown_policy_err():
     with pytest.raises(ValueError) as err:
 
-        @autoprop(cache=True, policy='unknown')
+        @autoprop.cache(policy='unknown')
         class MyObj:
             pass
 
@@ -573,7 +600,7 @@ def test_unknown_policy_err():
 
     with pytest.raises(ValueError) as err:
 
-        @autoprop
+        @autoprop.cache
         class MyObj:
 
             @autoprop.cache(policy='unknown')

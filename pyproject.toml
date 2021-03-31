@@ -1,0 +1,45 @@
+[build-system]
+requires = ["flit"]
+build-backend = "flit.buildapi"
+
+[tool.flit.metadata]
+module = "autoprop"
+author = "Kale Kundert"
+author-email = "kale@thekunderts.net"
+home-page = 'https://github.com/kalekundert/autoprop'
+description-file = 'README.rst'
+requires-python = "~=3.6"
+requires = [
+  'signature_dispatch',
+]
+classifiers = [
+  'Programming Language :: Python :: 3',
+  'License :: OSI Approved :: MIT License',
+]
+
+[tool.flit.metadata.requires-extra]
+test = [
+  'pytest',
+  'pytest-cov',
+  'coveralls',
+]
+doc = [
+  'sphinx',
+  'sphinx_rtd_theme',
+  'autoclasstoc',
+]
+
+[tool.flit.metadata.urls]
+'Documentation' = 'https://autoprop.readthedocs.io/en/latest/'
+'Version Control' = 'https://github.com/kalekundert/autoprop'
+'Bug Tracker' = 'https://github.com/kalekundert/autoprop/issues'
+'Continuous Integration' = 'https://github.com/kalekundert/autoprop/actions'
+'Test Coverage' = 'https://coveralls.io/github/kalekundert/autoprop'
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules --doctest-glob='*.rst'"
+doctest_optionflags = 'NORMALIZE_WHITESPACE'
+
+[tool.semantic_release]
+version_variable = 'autoprop.py:__version__'
+build_command = 'python -m pip install flit && flit build'
