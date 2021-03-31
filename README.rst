@@ -43,7 +43,7 @@ type the name of the attribute three times::
     ...     def attr(self, new_value):
     ...         print("setting attr")
     ...         self._attr = new_value
-
+    ...
     >>> obj = RegularProperty()
     >>> obj.attr = 1
     setting attr
@@ -57,7 +57,6 @@ finds.  For example, the code below defines the same property as the code
 above::
 
     >>> import autoprop
-
     >>> @autoprop
     ... class AutoProperty:
     ...
@@ -68,7 +67,7 @@ above::
     ...     def set_attr(self, new_value):
     ...         print("setting attr")
     ...         self._attr = new_value
-
+    ...
     >>> obj = AutoProperty()
     >>> obj.attr = 1
     setting attr
@@ -122,7 +121,7 @@ property.
 Caching
 =======
 If you have properties that are expensive to calculate, it's easy to cache 
-their results::
+them::
 
     >>> @autoprop.cache
     ... class Simulation(object):
@@ -165,7 +164,7 @@ It's also easy to cache some properties but not others::
     >>> s.expensive
     42
 
-The ``autoprop.cache()`` decorator accepts a ``policy`` keyword argument that 
+The ``@autoprop.cache()`` decorator accepts a ``policy`` keyword argument that 
 determines when properties will need to be recalculated.  The following 
 policies are understood:
 
@@ -180,8 +179,8 @@ policies are understood:
      decorator to the class's ``__setattr__()`` implementation, or providing an 
      implementation if one doesn't exist.  For classes that implement 
      ``__setattr__()`` and ``__getattr__()``, some care may be needed to avoid 
-     infinite recurs``__setattr__()`` ion (because autoprop may cause these 
-     methods to be called earlier than you would normally expect).
+     infinite recursion (because ``autoprop`` may cause these methods to be 
+     called earlier than you would normally expect).
 
   3. Any method decorated with ``@autoprop.refresh`` is called.
 
@@ -212,9 +211,9 @@ different policies to different getters within the same class.
 In order for any caching to occur, you must decorate the class with either 
 ``@autoprop.cache`` or ``@autoprop.dynamic``.  The standard ``@autoprop`` 
 decorator does not configure the class for caching, because doing so adds some 
-overhead and introduces some complexities regarding ``__setattr__()``.  
+overhead and introduces some complexities regarding ``__setattr__()``.  A 
 Attempting to cache individual properties without enabling caching at the class 
-level will cause an error.
+level will trigger an exception.
 
 Details
 =======
