@@ -9,7 +9,7 @@ import functools
 import signature_dispatch
 from collections import defaultdict
 
-__version__ = '2.0.0'
+__version__ = '2.1.0'
 
 _EXPECTED_NUM_ARGS = {'get': 0, 'set': 1, 'del': 0}
 _CACHE_POLICIES = ['dynamic', 'class', 'object', 'property', 'immutable']
