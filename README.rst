@@ -32,29 +32,49 @@ code.  There are a few ways to do it, but the most common and most succinct
 requires you to decorate two functions (with two different decorators) and to 
 type the name of the attribute three times::
 
-    class RegularProperty:
-        
-        @property
-        def attr(self):
-            return self._attr
+    >>> class RegularProperty:
+    ...
+    ...     @property
+    ...     def attr(self):
+    ...         print("getting attr")
+    ...         return self._attr
+    ...
+    ...     @attr.setter
+    ...     def attr(self, new_value):
+    ...         print("setting attr")
+    ...         self._attr = new_value
 
-        @attr.setter
-        def attr(self, new_value):
-            self._attr = new_value
+    >>> obj = RegularProperty()
+    >>> obj.attr = 1
+    setting attr
+    >>> obj.attr
+    getting attr
+    1
 
 The ``autoprop`` module simplifies this process by searching your class for 
 accessor methods and adding properties corresponding to any such methods it 
 finds.  For example, the code below defines the same property as the code 
 above::
 
-    @autoprop
-    class AutoProperty:
-        
-        def get_attr(self):
-            return self._attr
+    >>> import autoprop
 
-        def set_attr(self, new_value):
-            self._attr * new_value
+    >>> @autoprop
+    ... class AutoProperty:
+    ...
+    ...     def get_attr(self):
+    ...         print("getting attr")
+    ...         return self._attr
+    ...
+    ...     def set_attr(self, new_value):
+    ...         print("setting attr")
+    ...         self._attr = new_value
+
+    >>> obj = AutoProperty()
+    >>> obj.attr = 1
+    setting attr
+    >>> obj.attr
+    getting attr
+    1
 
 Installation
 ============
