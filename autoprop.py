@@ -134,6 +134,14 @@ class CachedProperty(property):
         cache = get_cache(obj)
         return cache.bind(self.name)
 
+    def getter_replacement(self):
+        def getter(obj, *args, **kwargs):
+            if not args and not kwargs:
+                return self.__get__(obj, None)
+            else:
+                return self.fget(obj, *args, **kwargs)
+        return getter
+
 def autoprop(cls):
     return _make_autoprops(cls)
 
@@ -328,6 +336,9 @@ def _make_autoprops(cls, *, cache=False, default_policy=_DEFAULT_POLICY):
                     ]))
 
             prop = CachedProperty(name, getter, setter, deleter, policy)
+
+            if getter:
+                setattr(cls, f'get_{name}', prop.getter_replacement())
 
         setattr(cls, name, prop)
 

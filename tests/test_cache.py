@@ -14,8 +14,8 @@ def _test_policy(make_policy_test_cls, class_decorator, getter_decorator, pertur
     o1 = MyObj(1)
     o2 = MyObj(2)
 
-    assert o1.x == 1
-    assert o2.x == 2
+    assert o1.x == o1.get_x() == 1
+    assert o2.x == o2.get_x() == 2
 
     # Indirectly modify the return value of `MyObj.get_x()` via a mutable 
     # dictionary.  This avoids triggering any of the conditions that would 
@@ -24,8 +24,8 @@ def _test_policy(make_policy_test_cls, class_decorator, getter_decorator, pertur
 
     perturb(o1)
 
-    assert o1.x == (3 if recalculate else 1)
-    assert o2.x == 2
+    assert o1.x == o1.get_x() == (3 if recalculate else 1)
+    assert o2.x == o2.get_x() == 2
 
 def make_policy_test_cls(class_decorator, getter_decorator, inherit_perturbers, include_setters=True, include_refresh=True):
 
@@ -497,6 +497,32 @@ def test_inherit_uncached():
     assert p.x == 3  # not cached
     assert c.x == 4  # not cached
     assert c.y == 2  # cached
+
+def test_dont_cache_getters_with_extra_args():
+    # Normally the getter function and the property are both cached, but 
+    # caching has to be disabled in the case where the getter is directly 
+    # called with optional arguments.
+
+    @autoprop.cache
+    class MyObj:
+
+        def get_x(self, i=0):
+            return self.d['x'][i]
+
+    obj = MyObj()
+    obj.d = {'x': [1, 2]}
+
+    assert obj.x == 1
+    assert obj.get_x() == 1
+    assert obj.get_x(0) == 1
+    assert obj.get_x(1) == 2
+
+    obj.d['x'] = [3, 4]
+
+    assert obj.x == 1
+    assert obj.get_x() == 1
+    assert obj.get_x(0) == 3
+    assert obj.get_x(1) == 4
 
 def test_cache_disabled_getter_err():
     with pytest.raises(ValueError) as err:
