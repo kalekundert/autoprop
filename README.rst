@@ -164,6 +164,14 @@ It's also easy to cache some properties but not others::
     >>> s.expensive
     42
 
+In order to enable caching for a class, you must decorate it with 
+``@autoprop.cache``.  This also sets the default caching behavior for any 
+properties of that class.  You can then decorate the getter methods of that 
+class in the same way, to override the default caching behavior for the 
+corresponding property.  Note that it is an error to use the 
+``@autoprop.cache`` decorator on non-getters, or in classes that have not 
+enabled caching.
+
 The ``@autoprop.cache()`` decorator accepts a ``policy`` keyword argument that 
 determines when properties will need to be recalculated.  The following 
 policies are understood:
@@ -194,26 +202,13 @@ policies are understood:
   properties or object attributes.
 
 - ``dynamic``: Properties are recalculated every time they are accessed.  Note 
-  that ``@autoprop.dynamic`` is exactly equivalent to 
+  that ``@autoprop.dynamic`` is an alias for 
   ``@autoprop.cache(policy='dynamic')``.
 
 - ``immutable``: Properties are never recalculated, and are furthermore not 
   allowed to have setter or deleter methods (an error will be raised if any 
   such methods are found).  As the name implies, this is for properties and 
   classes that are intended to be immutable.
-
-The default policy is ``object``.  The policy provided to a class-level 
-decorator becomes the default for every property in that class, while the 
-policy provided to a method-level decorator applies only to that method.  Note 
-that only getter methods can be given policies.  It is completely ok to give 
-different policies to different getters within the same class.
-
-In order for any caching to occur, you must decorate the class with either 
-``@autoprop.cache`` or ``@autoprop.dynamic``.  The standard ``@autoprop`` 
-decorator does not configure the class for caching, because doing so adds some 
-overhead and introduces some complexities regarding ``__setattr__()``.  
-Attempting to cache individual properties without enabling caching at the class 
-level will trigger an exception.
 
 Details
 =======
