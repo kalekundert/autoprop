@@ -34,7 +34,7 @@ def test_del():
 
     ex = Example()
     del ex.attr
-    assert ex._attr is 'del'
+    assert ex._attr == 'del'
 
 def test_get_set():
     @autoprop
