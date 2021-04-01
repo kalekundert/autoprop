@@ -211,7 +211,7 @@ different policies to different getters within the same class.
 In order for any caching to occur, you must decorate the class with either 
 ``@autoprop.cache`` or ``@autoprop.dynamic``.  The standard ``@autoprop`` 
 decorator does not configure the class for caching, because doing so adds some 
-overhead and introduces some complexities regarding ``__setattr__()``.  A 
+overhead and introduces some complexities regarding ``__setattr__()``.  
 Attempting to cache individual properties without enabling caching at the class 
 level will trigger an exception.
 
