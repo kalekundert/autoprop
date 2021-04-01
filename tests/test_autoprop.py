@@ -346,11 +346,11 @@ def test_optional_arguments():
 def test_keyword_only_arguments():
     # inspect.getargspec() chokes on methods with keyword-only arguments.
 
-    @autoprop   # (no fold)
-    class Example:
-        def get_attr(self, *, pos=None):
+    @autoprop
+    class Example: #
+        def get_attr(self, *, pos=None): #
             return 'attr'
-        def set_attr(self, *, new_value):
+        def set_attr(self, *, new_value): #
             pass
 
     ex = Example()
@@ -413,9 +413,14 @@ def test_staticmethod():
     del Example.attr
     assert Example.attr == ['get', 'del']
 
-def test_docstrings():
 
-    @autoprop
+@pytest.mark.parametrize('decorator', [autoprop, autoprop.cache])
+def test_docstrings(decorator):
+    # This is a bit of a tricky case because getting the docstring requires 
+    # accessing the `CachedProperty` descriptor as a class attribute, which 
+    # changes how the arguments to `__get__()` need to be interpreted.
+
+    @decorator
     class Example: #
         def get_attr(self): #
             "get attr"

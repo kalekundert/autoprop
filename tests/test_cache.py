@@ -609,5 +609,3 @@ def test_unknown_policy_err():
 
     assert err.match(r"unknown policy 'unknown', expected one of")
 
-
-

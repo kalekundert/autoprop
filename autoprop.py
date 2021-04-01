@@ -107,7 +107,7 @@ class CachedProperty(property):
         self.policy = policy
 
     def __get__(self, obj, owner=None):
-        # Class attribute access: 
+        # Class attribute access (e.g. for docstrings): 
         if obj is None:
             return super().__get__(obj, owner)
 
@@ -354,10 +354,6 @@ def _make_autoprops(cls, *, cache=False, default_policy=_DEFAULT_POLICY):
         setattr(cls, '__setattr__', __setattr__)
 
     return cls
-
-def _check_refresh(cache, message):
-    if not cache:
-        raise ValueError(message)
 
 def _check_policy(policy):
     if policy not in _CACHE_POLICIES:
