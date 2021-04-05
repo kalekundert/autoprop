@@ -166,15 +166,14 @@ It's also easy to cache some properties but not others::
 
 In order to enable caching for a class, you must decorate it with 
 ``@autoprop.cache``.  This also sets the default caching behavior for any 
-properties of that class.  You can then decorate the getter methods of that 
-class in the same way, to override the default caching behavior for the 
-corresponding property.  Note that it is an error to use the 
-``@autoprop.cache`` decorator on non-getters, or in classes that have not 
-enabled caching.
+properties of that class.  You can then override the default caching behavior 
+for any specific getter method of that class by decorating it in the same way.  
+Note that it is an error to use the ``@autoprop.cache`` decorator on 
+non-getters, or in classes that have not enabled caching.
 
 The ``@autoprop.cache()`` decorator accepts a ``policy`` keyword argument that 
-determines when properties will need to be recalculated.  The following 
-policies are understood:
+determines when properties will be recalculated.  The following policies are 
+understood:
 
 - ``object``: This is the default policy.  Properties are recalculated when 
   first accessed after a change to the object is detected.  Changes are 
@@ -190,7 +189,9 @@ policies are understood:
      infinite recursion (because ``autoprop`` may cause these methods to be 
      called earlier than you would normally expect).
 
-  3. Any method decorated with ``@autoprop.refresh`` is called.
+  3. Any method decorated with ``@autoprop.refresh`` is called.  This can be 
+     used to catch changes that would not otherwise be detected, e.g. changs to 
+     mutable objects.
 
 - ``class``: Similar to ``object``, but ``@autoprop.refresh`` will work even 
   when applied to class methods and static methods.  This is not the default 
@@ -208,7 +209,8 @@ policies are understood:
 - ``immutable``: Properties are never recalculated, and are furthermore not 
   allowed to have setter or deleter methods (an error will be raised if any 
   such methods are found).  As the name implies, this is for properties and 
-  classes that are intended to be immutable.
+  classes that are intended to be immutable.  Note that ``autoprop.immutable`` 
+  is an alias for ``@autoprop.cache(policy='immutable')``.
 
 Details
 =======

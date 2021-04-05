@@ -147,7 +147,7 @@ def make_policy_decorators(policy):
                 autoprop.cache(policy=policy),
             ), (
                 autoprop.cache,
-                autoprop.mark(policy=policy),
+                autoprop.policy(policy),
             )
     ]
 
@@ -189,8 +189,11 @@ def noop(obj):
 
 
 @pytest.mark.parametrize(
-        'class_decorator, getter_decorator', 
-            make_policy_decorators('immutable'),
+        'class_decorator, getter_decorator', [
+            *make_policy_decorators('immutable'),
+            (autoprop.dynamic, autoprop.immutable),
+            (autoprop.immutable, noop),
+        ],
 )
 @pytest.mark.parametrize(
         'perturb, recalculate', [

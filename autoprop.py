@@ -7,6 +7,7 @@ import inspect
 import re
 import functools
 import signature_dispatch
+from functools import partial
 from collections import defaultdict
 
 __version__ = '2.1.0'
@@ -146,13 +147,12 @@ def autoprop(cls):
     return _make_autoprops(cls)
 
 def cache(*args, **kwargs):
-    from functools import partial
 
     def wrapper(x, policy):
         if inspect.isclass(x):
             return _make_autoprops(x, cache=True, default_policy=policy)
         else:
-            return mark(policy=policy)(x)
+            return _assign_policy(x, policy=policy)
 
     dispatch = signature_dispatch()
 
@@ -174,14 +174,14 @@ def cache(*args, **kwargs):
 def dynamic(f):
     return cache(policy='dynamic')(f)
 
-def mark(*, policy):
+def immutable(f):
+    return cache(policy='immutable')(f)
+
+def policy(policy):
     _check_policy(policy)
 
     def wrapper(f):
-        if not f.__name__.startswith('get_'):
-            raise ValueError(f"can't cache {f.__qualname__}; it's not a getter")
-
-        setattr(f, _CACHE_POLICY_ATTR, policy)
+        _assign_policy(f, policy)
         return f
 
     return wrapper
@@ -370,6 +370,13 @@ def _check_policy(policy):
     if policy not in _CACHE_POLICIES:
         expected = ', '.join(repr(p) for p in _CACHE_POLICIES)
         raise ValueError(f"unknown policy {policy!r}, expected one of: {expected}")
+
+def _assign_policy(f, policy):
+    if not f.__name__.startswith('get_'):
+        raise ValueError(f"can't cache {f.__qualname__}; it's not a getter")
+
+    setattr(f, _CACHE_POLICY_ATTR, policy)
+    return f
 
 def _is_accessor(name, attr):
     if not inspect.isfunction(attr):
