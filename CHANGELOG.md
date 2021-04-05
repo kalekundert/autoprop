@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v2.2.0 (2021-04-05)
+### Feature
+* Add the `immutable` decorator ([`e8f023a`](https://github.com/kalekundert/autoprop/commit/e8f023ab099b3d1477bb285267e11528c43c4f5c))
+
 ## v2.1.1 (2021-04-01)
 ### Fix
 * Cache getters (not just properties) ([`ab454eb`](https://github.com/kalekundert/autoprop/commit/ab454eb1d247b147675fc6c377747892588762c1))
