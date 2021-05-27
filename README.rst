@@ -165,19 +165,24 @@ It's also easy to cache some properties but not others::
     42
 
 In order to enable caching for a class, you must decorate it with 
-``@autoprop.cache``.  This also sets the default caching behavior for any 
-properties of that class.  You can then override the default caching behavior 
-for any specific getter method of that class by decorating it in the same way.  
-Note that it is an error to use the ``@autoprop.cache`` decorator on 
-non-getters, or in classes that have not enabled caching.
+``@autoprop.cache`` (or one of its aliases).  This also sets the default 
+caching behavior for any properties of that class.  You can then override the 
+default caching behavior for any specific getter method of that class by 
+decorating it in the same way.  Note that it is an error to use the 
+``@autoprop.cache`` decorator on non-getters, or in classes that have not 
+enabled caching.
 
 The ``@autoprop.cache()`` decorator accepts a ``policy`` keyword argument that 
 determines when properties will be recalculated.  The following policies are 
 understood:
 
-- ``object``: This is the default policy.  Properties are recalculated when 
-  first accessed after a change to the object is detected.  Changes are 
-  detected in three ways:
+- ``property``: This is the default policy.  Properties are recalculated when 
+  first accessed after their own setter or deleter method has been called 
+  (whether directly or indirectly via a parameter).  This is useful for 
+  properties that don't depend on any other properties or object attributes.
+
+- ``object``: Properties are recalculated when first accessed after a change to 
+  the object is detected.  Changes are detected in three ways:
 
   1. One of the setter or deleter methods identified by ``autoprop`` is called.  
      This includes if the method is indirectly called via a property.
@@ -190,17 +195,12 @@ understood:
      called earlier than you would normally expect).
 
   3. Any method decorated with ``@autoprop.refresh`` is called.  This can be 
-     used to catch changes that would not otherwise be detected, e.g. changs to 
-     mutable objects.
+     used to catch changes that would not otherwise be detected, e.g. changes 
+     to mutable objects.
 
 - ``class``: Similar to ``object``, but ``@autoprop.refresh`` will work even 
   when applied to class methods and static methods.  This is not the default 
   because it adds some overhead and is not often necessary.
-
-- ``property``: Properties are recalculated when first accessed after their own 
-  setter or deleter method has been called (whether directly or indirectly via 
-  a parameter).  This is useful for properties that don't depend on any other 
-  properties or object attributes.
 
 - ``dynamic``: Properties are recalculated every time they are accessed.  Note 
   that ``@autoprop.dynamic`` is an alias for 

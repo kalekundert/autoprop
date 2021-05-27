@@ -222,8 +222,11 @@ def test_policy_immutable(class_decorator, getter_decorator, perturb, recalculat
     )
 
 @pytest.mark.parametrize(
-        'class_decorator, getter_decorator',
-            make_policy_decorators('property'),
+        'class_decorator, getter_decorator', [
+            *make_policy_decorators('property'),
+            (autoprop.cache, noop),
+            (autoprop.cache(), noop),
+        ],
 )
 @pytest.mark.parametrize(
         'perturb, recalculate', [
@@ -256,11 +259,8 @@ def test_policy_property(class_decorator, getter_decorator, perturb, recalculate
     )
 
 @pytest.mark.parametrize(
-        'class_decorator, getter_decorator', [
-            *make_policy_decorators('object'),
-            (autoprop.cache, noop),
-            (autoprop.cache(), noop),
-        ],
+        'class_decorator, getter_decorator',
+            make_policy_decorators('object'),
 )
 @pytest.mark.parametrize(
         'perturb, recalculate', [

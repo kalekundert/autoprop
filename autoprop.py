@@ -19,7 +19,7 @@ _CACHE_VERSION_ATTR = '_autoprop_cache_version'
 _CACHE_POLICY_ATTR = '_autoprop_cache_policy'
 _REFRESH_ATTR = '_autoprop_refresh'
 _INITIAL_VERSION = 1
-_DEFAULT_POLICY = 'object'
+_DEFAULT_POLICY = 'property'
 
 class Cache:
 
