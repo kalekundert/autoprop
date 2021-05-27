@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v3.0.0 (2021-05-27)
+### Feature
+* Change default cache policy to 'property' ([`a3baec5`](https://github.com/kalekundert/autoprop/commit/a3baec55ceee721c9090dc2a5639ac686eb6170e))
+
+### Breaking
+* the new default caches more aggressively, so code written with the old default may end up with stale values.  Update old code by replacing `@autoprop.cache` with `@autoprop.cache(policy='object')`.  ([`a3baec5`](https://github.com/kalekundert/autoprop/commit/a3baec55ceee721c9090dc2a5639ac686eb6170e))
+
 ## v2.2.0 (2021-04-05)
 ### Feature
 * Add the `immutable` decorator ([`e8f023a`](https://github.com/kalekundert/autoprop/commit/e8f023ab099b3d1477bb285267e11528c43c4f5c))
