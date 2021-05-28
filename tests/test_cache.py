@@ -27,6 +27,15 @@ def _test_policy(make_policy_test_cls, class_decorator, getter_decorator, pertur
     assert o1.x == o1.get_x() == (3 if recalculate else 1)
     assert o2.x == o2.get_x() == 2
 
+    # Perturb the same parameter again just to make sure there wasn't anything 
+    # special about the first perturbation.
+    o1.d['x'] = 4
+
+    perturb(o1)
+
+    assert o1.x == o1.get_x() == (4 if recalculate else 1)
+    assert o2.x == o2.get_x() == 2
+
 def make_policy_test_cls(class_decorator, getter_decorator, inherit_perturbers, include_setters=True, include_refresh=True):
 
     if inherit_perturbers:
