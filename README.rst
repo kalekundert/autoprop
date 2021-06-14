@@ -212,6 +212,10 @@ understood:
   classes that are intended to be immutable.  Note that ``autoprop.immutable`` 
   is an alias for ``@autoprop.cache(policy='immutable')``.
 
+You can also manually force every cached property to be recalculated, 
+regardless of their policies, by calling ``autoprop.clear_cache(obj)`` on the 
+object.
+
 Details
 =======
 Besides having the right prefix, there are two other criteria that methods must 
