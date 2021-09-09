@@ -2,6 +2,16 @@
 
 <!--next-version-placeholder-->
 
+## v4.0.0 (2021-09-09)
+### Feature
+* Add overwrite/automatic/manual cache policies ([`a013b69`](https://github.com/kalekundert/autoprop/commit/a013b69e1222918e776899d81eab29417eab0af0))
+
+### Breaking
+* remove property/object/class cache policies.  ([`a013b69`](https://github.com/kalekundert/autoprop/commit/a013b69e1222918e776899d81eab29417eab0af0))
+
+### Documentation
+* Describe how to manually clear the cache ([`7a526e7`](https://github.com/kalekundert/autoprop/commit/7a526e73b9c9ca39d9813cdeb10abba8d1f73059))
+
 ## v3.0.0 (2021-05-27)
 ### Feature
 * Change default cache policy to 'property' ([`a3baec5`](https://github.com/kalekundert/autoprop/commit/a3baec55ceee721c9090dc2a5639ac686eb6170e))
