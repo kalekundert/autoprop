@@ -1,0 +1,75 @@
+attr:
+  > class MyObj:
+  >
+  >     def __init__(self, x):
+  >         self.x = x
+
+@property:
+  > class MyObj:
+  >
+  >     def __init__(self, x):
+  >         self._x = x
+  >
+  >     @property
+  >     def x(self):
+  >         return self._x
+
+@cached_property:
+  > class MyObj:
+  >
+  >     def __init__(self, x):
+  >         self._x = x
+  >
+  >     @cached_property
+  >     def x(self):
+  >         return self._x
+
+@autoprop:
+  > @autoprop
+  > class MyObj:
+  >
+  >     def __init__(self, x):
+  >         self._x = x
+  >
+  >     def get_x(self):
+  >         return self._x
+
+@autoprop.cache:
+  > @autoprop.cache
+  > class MyObj:
+  >
+  >     def __init__(self, x):
+  >         self._x = x
+  >
+  >     def get_x(self):
+  >         return self._x
+
+@autoprop.manual:
+  > @autoprop.cache(policy='manual')
+  > class MyObj:
+  >
+  >     def __init__(self, x):
+  >         self._x = x
+  >
+  >     def get_x(self):
+  >         return self._x
+
+@autoprop.automatic:
+  > @autoprop.cache(policy='automatic', watch=[])
+  > class MyObj:
+  >
+  >     def __init__(self, x):
+  >         self._x = x
+  >
+  >     def get_x(self):
+  >         return self._x
+
+@autoprop.immutable:
+  > @autoprop.immutable
+  > class MyObj:
+  >
+  >     def __init__(self, x):
+  >         self._x = x
+  >
+  >     def get_x(self):
+  >         return self._x

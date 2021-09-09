@@ -11,6 +11,7 @@ description-file = 'README.rst'
 requires-python = "~=3.6"
 requires = [
   'signature_dispatch',
+  'backports.cached-property',
 ]
 classifiers = [
   'Programming Language :: Python :: 3',
@@ -41,8 +42,9 @@ addopts = "--doctest-modules --doctest-glob='*.rst'"
 doctest_optionflags = 'NORMALIZE_WHITESPACE'
 
 [tool.pccc]
+header_length = 72
 types = ["chore", "docs", "feat", "fix", "refactor", "style", "test"]
 
 [tool.semantic_release]
-version_variable = 'autoprop.py:__version__'
+version_variable = 'autoprop/__init__.py:__version__'
 build_command = 'python -m pip install flit && flit build'

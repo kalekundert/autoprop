@@ -22,58 +22,13 @@
    :alt: GitHub last commit
    :target: https://github.com/kalekundert/autoprop
 
-Properties are a feature in python that allow accessor functions (i.e. getters 
-and setters) to masquerade as regular attributes.  This makes it possible to 
-provide transparent APIs for classes that need to cache results, lazily load 
-data, maintain invariants, or react in any other way to attribute access.
+``autoprop`` is a library for automatically filling in classes with properties 
+(e.g. ``obj.x``) corresponding to each accessor method (e.g. ``obj.get_x()``, 
+``obj.set_x()``).  The biggest reasons to use ``autoprop`` are:
 
-Unfortunately, making a property requires an annoying amount of boilerplate 
-code.  There are a few ways to do it, but the most common and most succinct 
-requires you to decorate two functions (with two different decorators) and to 
-type the name of the attribute three times::
+- Less boilerplate than defining properties manually.
 
-    >>> class RegularProperty:
-    ...
-    ...     @property
-    ...     def attr(self):
-    ...         print("getting attr")
-    ...         return self._attr
-    ...
-    ...     @attr.setter
-    ...     def attr(self, new_value):
-    ...         print("setting attr")
-    ...         self._attr = new_value
-    ...
-    >>> obj = RegularProperty()
-    >>> obj.attr = 1
-    setting attr
-    >>> obj.attr
-    getting attr
-    1
-
-The ``autoprop`` module simplifies this process by searching your class for 
-accessor methods and adding properties corresponding to any such methods it 
-finds.  For example, the code below defines the same property as the code 
-above::
-
-    >>> import autoprop
-    >>> @autoprop
-    ... class AutoProperty:
-    ...
-    ...     def get_attr(self):
-    ...         print("getting attr")
-    ...         return self._attr
-    ...
-    ...     def set_attr(self, new_value):
-    ...         print("setting attr")
-    ...         self._attr = new_value
-    ...
-    >>> obj = AutoProperty()
-    >>> obj.attr = 1
-    setting attr
-    >>> obj.attr
-    getting attr
-    1
+- Sophisticated support for cached properties.
 
 Installation
 ============
@@ -127,104 +82,110 @@ them::
     ... class Simulation(object):
     ...
     ...     def get_data(self):
-    ...         print("some expensive calculation...")
+    ...         print("expensive calculation...")
     ...         return 42
     ...
     >>> s = Simulation()
     >>> s.data
-    some expensive calculation...
+    expensive calculation...
     42
     >>> s.data
     42
 
 It's also easy to cache some properties but not others::
 
-    >>> @autoprop.dynamic
+    >>> @autoprop
     ... class Simulation(object):
     ...
     ...     def get_cheap(self):
-    ...         print("some cheap calculation...")
+    ...         print("cheap calculation...")
     ...         return 16
     ...
     ...     @autoprop.cache
     ...     def get_expensive(self):
-    ...         print("some expensive calculation...")
+    ...         print("expensive calculation...")
     ...         return 42
     ...
     >>> s = Simulation()
     >>> s.cheap
-    some cheap calculation...
+    cheap calculation...
     16
     >>> s.cheap
-    some cheap calculation...
+    cheap calculation...
     16
     >>> s.expensive
-    some expensive calculation...
+    expensive calculation...
     42
     >>> s.expensive
     42
 
-In order to enable caching for a class, you must decorate it with 
-``@autoprop.cache`` (or one of its aliases).  This also sets the default 
-caching behavior for any properties of that class.  You can then override the 
-default caching behavior for any specific getter method of that class by 
-decorating it in the same way.  Note that it is an error to use the 
-``@autoprop.cache`` decorator on non-getters, or in classes that have not 
-enabled caching.
-
 The ``@autoprop.cache()`` decorator accepts a ``policy`` keyword argument that 
-determines when properties will be recalculated.  The following policies are 
-understood:
+determines how the cache will be managed.  The following policies are 
+supported:
 
-- ``property``: This is the default policy.  Properties are recalculated when 
-  first accessed after their own setter or deleter method has been called 
-  (whether directly or indirectly via a parameter).  This is useful for 
-  properties that don't depend on any other properties or object attributes.
+- ``overwrite``: This is the default policy.  Values are cached by overwriting 
+  the property itself, such that future lookups will directly access the cached 
+  value with no overhead.  This is exactly equivalent to using 
+  `functools.cached_property`.  Unlike normal properties, there is no way to 
+  customize what happens when setting or deleting these properties.  Setting 
+  the property will update its value, and deleting it will cause its value to 
+  be recalculated on the next access.
 
-- ``object``: Properties are recalculated when first accessed after a change to 
-  the object is detected.  Changes are detected in three ways:
+- ``manual``: Cached values are never recalculated automatically, but can be 
+  recalculated and/or changed manually.  There are two ways to do this:
+  
+  1. Specify ``provide_mutators=True`` to ``@autoprop.cache()``.  This will 
+     instruct autoprop to provide default setter and deleter implementations 
+     for the property, which will allow the cached value to be changed or 
+     dropped, respectively.  
+    
+  2. Call ``autoprop.set_cached_attr()`` and/or ``autoprop.del_cached_attr()``.  
+     These functions allow you to implement your own setter and deleter 
+     functions, which is often the entire purpose of using this policy.
+  
+  This policy has ≈10x more overhead than the ``overwrite`` policy, but allows 
+  you to control what happens when the attribute is set or deleted (like a 
+  regular property).  
 
-  1. One of the setter or deleter methods identified by ``autoprop`` is called.  
-     This includes if the method is indirectly called via a property.
+- ``automatic``: Cached values are automatically recalculated if certain other 
+  attributes of the object change.  In order to use this policy, you must 
+  specify ``watch=<list of attributes>`` to ``@autoprop.cache()``.  The *watch* 
+  argument must be iterable, and each item must either be the name of an 
+  attribute (e.g. a string) or a callable that will accept the object in 
+  question and return any value.  The cached value will be recalculated 
+  whenever any of the "watched" values change.  The cache can also be 
+  recalculated manually, in any of the ways described for the ``manual`` 
+  policy.
 
-  2. Any attribute of the object is set.  This is detected by applying a 
-     decorator to the class's ``__setattr__()`` implementation, or providing an 
-     implementation if one doesn't exist.  For classes that implement 
-     ``__setattr__()`` and ``__getattr__()``, some care may be needed to avoid 
-     infinite recursion (because ``autoprop`` may cause these methods to be 
-     called earlier than you would normally expect).
-
-  3. Any method decorated with ``@autoprop.refresh`` is called.  This can be 
-     used to catch changes that would not otherwise be detected, e.g. changes 
-     to mutable objects.
-
-- ``class``: Similar to ``object``, but ``@autoprop.refresh`` will work even 
-  when applied to class methods and static methods.  This is not the default 
-  because it adds some overhead and is not often necessary.
-
-- ``dynamic``: Properties are recalculated every time they are accessed.  Note 
-  that ``@autoprop.dynamic`` is an alias for 
-  ``@autoprop.cache(policy='dynamic')``.
-
+  This policy has ≈25x more overhead than the ``overwrite`` policy, but allows 
+  cached values to stay up to date when the attributes they depend on change.
+  
 - ``immutable``: Properties are never recalculated, and are furthermore not 
   allowed to have setter or deleter methods (an error will be raised if any 
   such methods are found).  As the name implies, this is for properties and 
-  classes that are intended to be immutable.  Note that ``autoprop.immutable`` 
-  is an alias for ``@autoprop.cache(policy='immutable')``.
+  classes that are intended to be immutable.  
+  
+  Note that ``autoprop.immutable`` is an alias for 
+  ``@autoprop.cache(policy='immutable')``.
 
-You can also manually force every cached property to be recalculated, 
-regardless of their policies, by calling ``autoprop.clear_cache(obj)`` on the 
-object.
+- ``dynamic``: Properties are recalculated every time they are accessed.  This 
+  is exactly equivalent what ``autoprop`` does when caching is disabled, which 
+  is exactly equivalent to using ``@property``.  Use this policy when you want 
+  to specify ``@autoprop.cache`` at the class-level, but also need to prevent a 
+  few properties from being cached.
+  
+  Note that ``@autoprop.dynamic`` is an alias for 
+  ``@autoprop.cache(policy='dynamic')``.
 
 Details
 =======
 Besides having the right prefix, there are two other criteria that methods must 
 meet in order to be made into properties.  The first is that they must take the 
-right number of required arguments.  Getters and deleters can't have any 
-required arguments (other than self).  Setters must have exactly one required 
-argument (other than self), which is the value to set.  Default, variable, and 
-keyword arguments are all ignored; only the number of required arguments 
-matters.
+right number of arguments.  Getters and deleters must not require any arguments 
+(other than self).  Setters must accept exactly one argument (other than self), 
+which is the value to set.  Default, variable, and keyword arguments are all 
+ignored; all that matters is that the function can be called with the expected 
+number of arguments.
 
 Any methods that have the right name but the wrong arguments are silently 
 ignored.  This can be nice for getters that require, for example, an index.  

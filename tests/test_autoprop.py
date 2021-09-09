@@ -15,16 +15,19 @@ def test_get():
 
     ex = Example()
     assert ex.attr == 'attr'
+    assert ex.attr == 'attr'
 
 def test_set():
     @autoprop
     class Example: #
         def set_attr(self, attr): #
-            self._attr = 'set ' + attr
+            self._attr = ['set', attr]
 
     ex = Example()
-    ex.attr = 'attr'
-    assert ex._attr == 'set attr'
+    ex.attr = 'x'
+    assert ex._attr == ['set', 'x']
+    ex.attr = 'y'
+    assert ex._attr == ['set', 'y']
 
 def test_del():
     @autoprop
@@ -35,34 +38,108 @@ def test_del():
     ex = Example()
     del ex.attr
     assert ex._attr == 'del'
+    del ex.attr
+    assert ex._attr == 'del'
 
 def test_get_set():
     @autoprop
     class Example: #
         def get_attr(self): #
-            return self._attr
+            return ['get', *self._attr]
         def set_attr(self, attr): #
-            self._attr = 'set ' + attr
+            self._attr = ['set', attr]
 
     ex = Example()
-    ex.attr = 'attr'
-    assert ex.attr == 'set attr'
+    ex.attr = 'x'
+    assert ex.attr == ['get', 'set', 'x']
+    ex.attr = 'y'
+    assert ex.attr == ['get', 'set', 'y']
+
+def test_get_del():
+    @autoprop
+    class Example: #
+        def get_attr(self): #
+            return ['get', *self._attr]
+        def del_attr(self): #
+            self._attr = ['del']
+
+    ex = Example()
+    del ex.attr
+    assert ex.attr == ['get', 'del']
+    del ex.attr
+    assert ex.attr == ['get', 'del']
 
 def test_get_set_del():
     @autoprop
     class Example: #
         def get_attr(self): #
-            return self._attr
+            return ['get', *self._attr]
         def set_attr(self, attr): #
-            self._attr = 'set ' + attr
+            self._attr = ['set', attr]
         def del_attr(self): #
-            self._attr = 'del'
+            self._attr = ['del']
 
     ex = Example()
-    ex.attr = 'attr'
-    assert ex.attr == 'set attr'
+
+    ex.attr = 'x'
+    assert ex.attr == ['get', 'set', 'x']
     del ex.attr
-    assert ex.attr == 'del'
+    assert ex.attr == ['get', 'del']
+
+    ex.attr = 'y'
+    assert ex.attr == ['get', 'set', 'y']
+    del ex.attr
+    assert ex.attr == ['get', 'del']
+
+def test_protected():
+    @autoprop
+    class Example: #
+        def _get_attr(self): #
+            return ['get', *self._attr_helper]
+        def _set_attr(self, attr): #
+            self._attr_helper = ['set', attr]
+        def _del_attr(self): #
+            self._attr_helper = ['del']
+
+    ex = Example()
+
+    ex._attr = 'x'
+    assert ex._attr == ['get', 'set', 'x']
+    del ex._attr
+    assert ex._attr == ['get', 'del']
+
+    ex._attr = 'y'
+    assert ex._attr == ['get', 'set', 'y']
+    del ex._attr
+    assert ex._attr == ['get', 'del']
+
+def test_private():
+    @autoprop
+    class Example: #
+
+        def __get_attr(self): #
+            return ['get', *self.__attr_helper]
+        def __set_attr(self, attr): #
+            self.__attr_helper = ['set', attr]
+        def __del_attr(self): #
+            self.__attr_helper = ['del']
+
+        def test(self): #
+            # Implement the test within the class, so we have access to 
+            # name-mangled attributes.
+
+            ex.__attr = 'x'
+            assert ex.__attr == ['get', 'set', 'x']
+            del ex.__attr
+            assert ex.__attr == ['get', 'del']
+
+            ex.__attr = 'y'
+            assert ex.__attr == ['get', 'set', 'y']
+            del ex.__attr
+            assert ex.__attr == ['get', 'del']
+
+    ex = Example()
+    ex.test()
 
 def test_ignore_similar_names():
     @autoprop
@@ -74,15 +151,15 @@ def test_ignore_similar_names():
     with pytest.raises(AttributeError):
         ex.attr
 
-def test_ignore_empty_names():
+def test_ignore_dunder():
     @autoprop
     class Example: #
-        def get_(self): #
-            return 'get'
+        def __get_attr__(self): #
+            return 'attr'
 
     ex = Example()
     with pytest.raises(AttributeError):
-        getattr(ex, '')
+        ex.attr
 
 def test_ignore_non_methods():
     @autoprop
@@ -327,7 +404,7 @@ def test_partially_inherited_autoprops():
     del c.attr
     assert c.attr == ['parent get', 'child del']
 
-def test_optional_arguments():
+def test_optional_arguments_1():
     @autoprop
     class Example: #
         def get_attr(self, pos=None, *args, **kwargs): #
@@ -342,6 +419,32 @@ def test_optional_arguments():
     assert ex.attr == ['get', 'set', 'x']
     del ex.attr
     assert ex.attr == ['get', 'del']
+
+def test_optional_arguments_2():
+    # Ok if a setter has one (or more) optional arguments in lieu of one 
+    # required argument.
+
+    @autoprop
+    class Example: #
+        def get_attr(self): #
+            return ['get', *self._attr]
+        def set_attr(self, new_value=None): #
+            self._attr = ['set', new_value]
+
+    ex = Example()
+    ex.attr = 'x'
+    assert ex.attr == ['get', 'set', 'x']
+
+    @autoprop
+    class Example: #
+        def get_attr(self): #
+            return ['get', *self._attr]
+        def set_attr(self, new_value=None, other_arg=None): #
+            self._attr = ['set', new_value, other_arg]
+
+    ex = Example()
+    ex.attr = 'x'
+    assert ex.attr == ['get', 'set', 'x', None]
 
 def test_keyword_only_arguments():
     # inspect.getargspec() chokes on methods with keyword-only arguments.
@@ -413,8 +516,14 @@ def test_staticmethod():
     del Example.attr
     assert Example.attr == ['get', 'del']
 
-
-@pytest.mark.parametrize('decorator', [autoprop, autoprop.cache])
+@pytest.mark.parametrize(
+    'decorator', [
+        autoprop,
+        autoprop.dynamic,
+        autoprop.cache(policy='manual'),
+        autoprop.cache(policy='automatic', watch=[]),
+    ],
+)
 def test_docstrings(decorator):
     # This is a bit of a tricky case because getting the docstring requires 
     # accessing the `CachedProperty` descriptor as a class attribute, which 
@@ -438,4 +547,20 @@ def test_docstrings(decorator):
     # behavior of the `property()` decorator.
     assert Example.attr.__doc__ == "get attr"
 
+@pytest.mark.parametrize(
+    'decorator', [
+        autoprop.immutable,
+    ],
+)
+def test_docstrings_immutable(decorator):
+    # See `test_docstrings()` for more info.
+
+    @decorator
+    class Example: #
+        def get_attr(self): #
+            "get attr"
+            pass
+
+    ex = Example()
+    assert Example.attr.__doc__ == "get attr"
 
