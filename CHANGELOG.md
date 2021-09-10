@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v4.0.1 (2021-09-10)
+### Fix
+* Use built-in functools.cached_property in py3.8+ ([`be358a9`](https://github.com/kalekundert/autoprop/commit/be358a9cf4b95d60a70ecbe318852f9db63c92d1))
+
 ## v4.0.0 (2021-09-09)
 ### Feature
 * Add overwrite/automatic/manual cache policies ([`a013b69`](https://github.com/kalekundert/autoprop/commit/a013b69e1222918e776899d81eab29417eab0af0))
