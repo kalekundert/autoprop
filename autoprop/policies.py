@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 
 import functools
+import sys
 
 from .cache import (
         CachedProperty, ConditionalCachedProperty,
         set_cached_attr, del_cached_attr,
 )
 from operator import attrgetter
-from backports.cached_property import cached_property
+
+if sys.version_info >= (3, 8):
+    from functools import cached_property
+else:
+    from backports.cached_property import cached_property
 
 _KNOWN_POLICIES = {}
 _MISSING = object()
