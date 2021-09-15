@@ -21,7 +21,7 @@ from .cache import (
         get_cached_attr, set_cached_attr, del_cached_attr,
 )
 
-__version__ = '4.0.1'
+__version__ = '4.0.2'
 
 # Hack to make the module directly usable as a decorator.  Only works for 
 # python 3.5 or higher.  See this Stack Overflow post:

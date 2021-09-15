@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v4.0.2 (2021-09-15)
+### Fix
+* Upgrade to signature_dispatch~=1.0 ([`453447a`](https://github.com/kalekundert/autoprop/commit/453447aecdd7ddc7ca9e7898d0f6b99ff4a073f0))
+
 ## v4.0.1 (2021-09-10)
 ### Fix
 * Use built-in functools.cached_property in py3.8+ ([`be358a9`](https://github.com/kalekundert/autoprop/commit/be358a9cf4b95d60a70ecbe318852f9db63c92d1))
