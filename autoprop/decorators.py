@@ -8,7 +8,8 @@ import signature_dispatch
 from .policies import _make_policy
 from functools import partial
 from collections import defaultdict
-from collections.abc import Callable
+from types import FunctionType
+from typing import Union
 
 _CACHE_POLICY_ATTR = '__autoprop_cache_policy'
 _EXPECTED_NUM_ARGS = {'get': 0, 'set': 1, 'del': 0}
@@ -17,7 +18,8 @@ _UNSPECIFIED = object()
 def autoprop(cls):
     return _make_autoprops(cls)
 
-def cache(*args, **kwargs):
+@signature_dispatch
+def cache(*, policy, **kwargs):
     """
     Enable caching for a method or class.
 
@@ -31,33 +33,22 @@ def cache(*args, **kwargs):
 
         watch (List[str]):
             Only allowed for the ``automatic`` policy.  
-
-    
-
     """
-
-    def decorator(x, policy='overwrite', **kwargs):
-        policy = _make_policy(policy, **kwargs)
+    def decorator(x):
+        _policy = _make_policy(policy, **kwargs)
         if inspect.isclass(x):
-            return _make_autoprops(x, default_policy=policy)
+            return _make_autoprops(x, default_policy=_policy)
         else:
-            return _assign_policy(x, policy=policy)
+            return _assign_policy(x, policy=_policy)
+    return decorator
 
-    dispatch = signature_dispatch()
+@signature_dispatch
+def cache():
+    return cache(policy='overwrite')
 
-    @dispatch
-    def decorator_factory(*, policy, **kwargs):
-        return partial(decorator, policy=policy, **kwargs)
-
-    @dispatch
-    def decorator_factory():
-        return decorator
-
-    @dispatch
-    def decorator_factory(f: Callable):
-        return decorator(f)
-
-    return decorator_factory(*args, **kwargs)
+@signature_dispatch
+def cache(func_or_cls):
+    return cache()(func_or_cls)
 
 def dynamic(f):
     """
