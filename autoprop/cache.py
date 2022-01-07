@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 _CACHE_ATTR = '__autoprop_cache'
 _SET_BY_USER = object()
 _UNSPECIFIED = object()

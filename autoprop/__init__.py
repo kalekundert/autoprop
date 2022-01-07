@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 Infer properties from accessor methods.
 
