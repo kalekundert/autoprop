@@ -1,24 +1,25 @@
 [build-system]
-requires = ["flit_core"]
+requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
-[tool.flit.metadata]
-module = "autoprop"
-author = "Kale Kundert"
-author-email = "kale@thekunderts.net"
-home-page = 'https://github.com/kalekundert/autoprop'
-description-file = 'README.rst'
+[project]
+name = "autoprop"
+authors = [
+  {name = "Kale Kundert", email = "kale@thekunderts.net"},
+]
+readme = 'README.rst'
+dynamic = ["version", "description"]
 requires-python = "~=3.6"
-requires = [
+dependencies = [
   'signature_dispatch~=1.0',
   'backports.cached-property;python_version<"3.8"',
 ]
 classifiers = [
-  'Programming Language :: Python :: 3',
+  'Programming Language :: Python :: 3.6',
   'License :: OSI Approved :: MIT License',
 ]
 
-[tool.flit.metadata.requires-extra]
+[project.optional-dependencies]
 test = [
   'pytest',
   'pytest-cov',
@@ -30,7 +31,7 @@ doc = [
   'autoclasstoc',
 ]
 
-[tool.flit.metadata.urls]
+[project.urls]
 'Documentation' = 'https://autoprop.readthedocs.io/en/latest/'
 'Version Control' = 'https://github.com/kalekundert/autoprop'
 'Bug Tracker' = 'https://github.com/kalekundert/autoprop/issues'
