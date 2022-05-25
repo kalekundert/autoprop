@@ -797,6 +797,51 @@ def test_read_only_deleter_err(getter_decorator):
     assert err.match(r"getter: .*MyObj\.get_x")
     assert err.match(r"deleter: .*MyObj.del_x")
 
+@pytest.mark.parametrize(
+        'cls_decorator', [
+            autoprop.cache,
+            autoprop.immutable,
+        ]
+)
+def test_setter_only_err(cls_decorator):
+    # Found a bug where the error formatting fails if a setter, but not a 
+    # getter, is defined for cache policies where that doesn't make sense.
+
+    with pytest.raises(ValueError) as err:
+
+        @cls_decorator
+        class MyObj:
+
+            def set_x(self, x):
+                pass
+
+    assert err.match(r"can't specify setter")
+    assert err.match(r"property: .*MyObj\.x")
+    assert err.match(r"getter: undefined")
+    assert err.match(r"setter: .*MyObj\.set_x")
+
+@pytest.mark.parametrize(
+        'cls_decorator', [
+            autoprop.cache,
+            autoprop.immutable,
+        ]
+)
+def test_deleter_only_err(cls_decorator):
+    # See comment in `test_setter_only_err()`.
+
+    with pytest.raises(ValueError) as err:
+
+        @cls_decorator
+        class MyObj:
+
+            def del_x(self):
+                pass
+
+    assert err.match(r"can't specify deleter")
+    assert err.match(r"property: .*MyObj\.x")
+    assert err.match(r"getter: undefined")
+    assert err.match(r"deleter: .*MyObj\.del_x")
+
 def test_cache_non_getter_err():
     with pytest.raises(ValueError) as err:
 

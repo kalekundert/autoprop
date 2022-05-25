@@ -203,8 +203,6 @@ def _regex_in(*terms):
     return '|'.join(re.escape(x) for x in terms)
 
 class _PropertyName:
-    root: str
-    prefix: str
 
     def __init__(self, root, prefix):
         self.root = root

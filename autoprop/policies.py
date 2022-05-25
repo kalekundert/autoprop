@@ -84,16 +84,16 @@ class OverwritePolicy(Policy):
             raise ValueError("\n".join([
                 f"can't specify setter for property using the 'overwrite' cache policy",
                 f"property: {cls.__qualname__}.{name}",
-                f"getter: {getter.__qualname__}",
-                f"setter: {setter.__qualname__}",
+                f"getter: {getter or 'undefined'}",
+                f"setter: {setter}",
             ]))
 
         if deleter:
             raise ValueError("\n".join([
                 f"can't specify deleter for property using the 'overwrite' cache policy",
                 f"property: {cls.__qualname__}.{name}",
-                f"getter: {getter.__qualname__}",
-                f"deleter: {deleter.__qualname__}",
+                f"getter: {getter or 'undefined'}",
+                f"deleter: {deleter}",
             ]))
 
         return cached_property(getter)
@@ -136,16 +136,16 @@ class ImmutablePolicy(Policy):
             raise ValueError("\n".join([
                 f"can't specify setter for immutable property",
                 f"property: {cls.__qualname__}.{name}",
-                f"immutable getter: {getter.__qualname__}",
-                f"setter: {setter.__qualname__}",
+                f"immutable getter: {getter or 'undefined'}",
+                f"setter: {setter}",
             ]))
 
         if deleter:
             raise ValueError("\n".join([
                 f"can't specify deleter for immutable property",
                 f"property: {cls.__qualname__}.{name}",
-                f"immutable getter: {getter.__qualname__}",
-                f"deleter: {deleter.__qualname__}",
+                f"immutable getter: {getter or 'undefined'}",
+                f"deleter: {deleter}",
             ]))
 
         return CachedProperty(getter, setter, deleter)
