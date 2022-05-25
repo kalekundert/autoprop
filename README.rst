@@ -165,7 +165,7 @@ supported:
   such methods are found).  As the name implies, this is for properties and 
   classes that are intended to be immutable.  
   
-  Note that ``autoprop.immutable`` is an alias for 
+  Note that ``@autoprop.immutable`` is an alias for 
   ``@autoprop.cache(policy='immutable')``.
 
 - ``dynamic``: Properties are recalculated every time they are accessed.  This 
@@ -220,3 +220,5 @@ properties are defined if you'd so like.  This criterion does not apply to
 superclasses, so it is possible for properties to shadow attributes defined in 
 parent classes.
 
+If you want to explicitly ignore a method which would otherwise be discovered 
+by ``autoprop``, use the ``@autoprop.ignore`` decorator.

@@ -14,8 +14,8 @@ def test_get():
             return 'attr'
 
     ex = Example()
-    assert ex.attr == 'attr'
-    assert ex.attr == 'attr'
+    assert ex.attr == ex.get_attr() == 'attr'
+    assert ex.attr == ex.get_attr() == 'attr'
 
 def test_set():
     @autoprop
@@ -28,6 +28,8 @@ def test_set():
     assert ex._attr == ['set', 'x']
     ex.attr = 'y'
     assert ex._attr == ['set', 'y']
+    ex.set_attr('z')
+    assert ex._attr == ['set', 'z']
 
 def test_del():
     @autoprop
@@ -38,7 +40,13 @@ def test_del():
     ex = Example()
     del ex.attr
     assert ex._attr == 'del'
+
+    ex._attr = 'reset'
     del ex.attr
+    assert ex._attr == 'del'
+
+    ex._attr = 'reset'
+    ex.del_attr()
     assert ex._attr == 'del'
 
 def test_get_set():
@@ -140,6 +148,19 @@ def test_private():
 
     ex = Example()
     ex.test()
+
+def test_ignore_decorator():
+    @autoprop
+    class Example: #
+        @autoprop.ignore
+        def get_attr(self): #
+            return 'attr'
+
+    ex = Example()
+    with pytest.raises(AttributeError):
+        ex.attr
+
+    assert ex.get_attr() == 'attr'
 
 def test_ignore_similar_names():
     @autoprop

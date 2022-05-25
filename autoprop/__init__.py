@@ -14,7 +14,7 @@ The :mod:`autoprop` module can be directly used as a class decorator.
 """
 
 from .decorators import (
-        autoprop, cache, dynamic, immutable, policy,
+        autoprop, cache, dynamic, immutable, policy, ignore
 )
 from .cache import (
         get_cache, clear_cache,

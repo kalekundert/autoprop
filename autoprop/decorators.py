@@ -12,6 +12,7 @@ from types import FunctionType
 from typing import Union
 
 _CACHE_POLICY_ATTR = '__autoprop_cache_policy'
+_IGNORE_ATTR = '__autoprop_ignore'
 _EXPECTED_NUM_ARGS = {'get': 0, 'set': 1, 'del': 0}
 _UNSPECIFIED = object()
 
@@ -89,6 +90,10 @@ def policy(policy: str, **kwargs):
         return f
 
     return wrapper
+
+def ignore(func):
+    setattr(func, _IGNORE_ATTR, True)
+    return func
 
 
 def _make_autoprops(cls, *, default_policy='dynamic'):
@@ -182,6 +187,9 @@ def _assign_policy(f, policy):
 
 def _is_accessor(cls, name, attr):
     if not inspect.isfunction(attr):
+        return False
+
+    if hasattr(attr, _IGNORE_ATTR):
         return False
 
     try:
