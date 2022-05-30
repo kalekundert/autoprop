@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v4.1.0 (2022-05-30)
+### Feature
+* Add decorator to explicitly ignore methods ([`1687e06`](https://github.com/kalekundert/autoprop/commit/1687e062421f76b6d497297779a3e7f3b30bd52d))
+
+### Fix
+* Handle undefined getters in error messages ([`f2bb9e5`](https://github.com/kalekundert/autoprop/commit/f2bb9e5b7586d5e09f3cc14690b6e15c1ab6863e))
+
 ## v4.0.2 (2021-09-15)
 ### Fix
 * Upgrade to signature_dispatch~=1.0 ([`453447a`](https://github.com/kalekundert/autoprop/commit/453447aecdd7ddc7ca9e7898d0f6b99ff4a073f0))
