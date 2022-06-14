@@ -1,6 +1,6 @@
-*******************************************************
-``autoprop`` --- Infer properties from accessor methods
-*******************************************************
+*****************************************************
+``autoprop`` — Infer properties from accessor methods
+*****************************************************
 .. image:: https://img.shields.io/pypi/v/autoprop.svg
    :alt: Last release
    :target: https://pypi.python.org/pypi/autoprop
@@ -126,7 +126,7 @@ supported:
 - ``overwrite``: This is the default policy.  Values are cached by overwriting 
   the property itself, such that future lookups will directly access the cached 
   value with no overhead.  This is exactly equivalent to using 
-  `functools.cached_property`.  Unlike normal properties, there is no way to 
+  ``@functools.cached_property``.  Unlike normal properties, there is no way to 
   customize what happens when setting or deleting these properties.  Setting 
   the property will update its value, and deleting it will cause its value to 
   be recalculated on the next access.
