@@ -9,8 +9,7 @@
    :alt: Python version
    :target: https://pypi.python.org/pypi/autoprop
 
-.. image:: 
-   https://img.shields.io/github/workflow/status/kalekundert/autoprop/Test%20and%20release/master
+.. image:: https://img.shields.io/github/actions/workflow/status/kalekundert/autoprop/test_and_release.yml?branch=master
    :alt: Test status
    :target: https://github.com/kalekundert/autoprop/actions
 
